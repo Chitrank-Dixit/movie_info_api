@@ -10,3 +10,6 @@ from flask.ext.httpauth import HTTPBasicAuth
 app = Flask(__name__, static_url_path="")
 api = Api(app)
 auth = HTTPBasicAuth()
+
+if __name__ == '__main__':
+    app.run(debug=True)
