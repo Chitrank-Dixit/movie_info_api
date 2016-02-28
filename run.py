@@ -1,7 +1,6 @@
 #!flask/bin/python
 
-"""Alternative version of the ToDo RESTful server implemented using the
-Flask-RESTful extension."""
+"""Movie Recommender API"""
 
 from flask import Flask, jsonify, abort, make_response
 from flask.ext.restful import Api, Resource, reqparse, fields, marshal
