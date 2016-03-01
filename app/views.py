@@ -4,8 +4,8 @@ from app import marshal
 from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
-from .models import User, UserPreferences, FilmIndustry
-from .serializers import UserSchema , UserPreferencesSchema
+from .models import User, UserPreferences, FilmIndustry, Genre, Movie
+from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema
 
 # # refer microblog app by miguelgrinberg to make models and views flask, just take care this
 # # time we are building the API server not just a basic site and take care to use only class based
@@ -93,7 +93,7 @@ class UsersAPI(Resource):
         return {'message': 'data deleted'}
 
 api.add_resource(UsersListCreateAPI, '/movie_recommend/api/v1/users', endpoint='users')
-api.add_resource(UsersAPI, '/movie_recommend/api/v1/users/<int:id>', endpoint='user')
+api.add_resource(UsersAPI, '/movie_recommend/api/v1/users/<int:id>', endpoint='user_settings')
 
 
 ############### UserPreferences API resource ##################
@@ -101,14 +101,14 @@ api.add_resource(UsersAPI, '/movie_recommend/api/v1/users/<int:id>', endpoint='u
 class UserPreferencesListCreateAPI(Resource):
     #decorators = [auth.login_required]
 
-    # def __init__(self):
-    #     self.reqparse = reqparse.RequestParser()
-    #     self.reqparse.add_argument('title', type=str, required=True,
-    #                                help='No task title provided',
-    #                                location='json')
-    #     self.reqparse.add_argument('description', type=str, default="",
-    #                                location='json')
-    #     super(TaskListAPI, self).__init__()
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('title', type=str, required=True,
+                                   help='No task title provided',
+                                   location='json')
+        self.reqparse.add_argument('description', type=str, default="",
+                                   location='json')
+        super(UserPreferencesListCreateAPI, self).__init__()
 
     def get(self):
         user_preferences = UserPreferences.query.all()
@@ -127,8 +127,8 @@ class UserPreferencesListCreateAPI(Resource):
     #     tasks.append(task)
     #     return {'task': marshal(task, task_fields)}, 201
 
-api.add_resource(UserPreferencesListCreateAPI, '/movie_recommend/api/v1/user_preferences', endpoint='user_preferences')
-#
+
+
 # class UserPreferencesAPI(Resource):
 #     decorators = [auth.login_required]
 #
@@ -164,71 +164,156 @@ api.add_resource(UserPreferencesListCreateAPI, '/movie_recommend/api/v1/user_pre
 #         return {'result': True}
 #
 #
-#
-#
-# # ############### Movie API resource ##################
-#
-# class MovieListCreateAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, required=True,
-#                                    help='No task title provided',
-#                                    location='json')
-#         self.reqparse.add_argument('description', type=str, default="",
-#                                    location='json')
-#         super(TaskListAPI, self).__init__()
-#
-#     def get(self):
-#         return {'tasks': [marshal(task, task_fields) for task in tasks]}
-#
-#     def post(self):
-#         args = self.reqparse.parse_args()
-#         task = {
-#             'id': tasks[-1]['id'] + 1,
-#             'title': args['title'],
-#             'description': args['description'],
-#             'done': False
-#         }
-#         tasks.append(task)
-#         return {'task': marshal(task, task_fields)}, 201
-#
-#
-# class MovieAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, location='json')
-#         self.reqparse.add_argument('description', type=str, location='json')
-#         self.reqparse.add_argument('done', type=bool, location='json')
-#         super(TaskAPI, self).__init__()
-#
-#     def get(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         return {'task': marshal(task[0], task_fields)}
-#
-#     def put(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         task = task[0]
-#         args = self.reqparse.parse_args()
-#         for k, v in args.items():
-#             if v is not None:
-#                 task[k] = v
-#         return {'task': marshal(task, task_fields)}
-#
-#     def delete(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         tasks.remove(task[0])
-#         return {'result': True}
-#
+
+api.add_resource(UserPreferencesListCreateAPI, '/movie_recommend/api/v1/user_preferences', endpoint='user_preferences')
+#api.add_resource(UsersAPI, '/movie_recommend/api/v1/user_preferences/<int:id>', endpoint='user_preferences_settings')
+
+
+############### FilmIndustry API resource ##################
+
+
+class FilmIndustryListCreateAPI(Resource):
+    # decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('name', type=str, required=True,
+                                   help='No username provided',
+                                   location='json')
+        self.reqparse.add_argument('location', type=str, default="",
+                                   location='json')
+        super(FilmIndustryListCreateAPI, self).__init__()
+
+    def get(self):
+        film_industries = FilmIndustry.query.all()
+        film_industries_schema = FilmIndustrySchema(many=True)
+        result = film_industries_schema.dump(film_industries)
+        return {"film_industries_list": result.data}
+
+    def post(self):
+        args = self.reqparse.parse_args()
+        film_industry = FilmIndustry(str(args['name']) ,str(args['location']) )
+        db.session.add(film_industry)
+        db.session.commit()
+        film_industry_schema = FilmIndustrySchema()
+        result = film_industry_schema.dump(film_industry)
+
+        return {"data": result.data ,"message":  "data inserted" }, 201
+
+
+
+
+
+class FilmIndustryAPI(Resource):
+    #decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('name', type=str, location='json')
+        self.reqparse.add_argument('location', type=str, location='json')
+        super(FilmIndustryAPI, self).__init__()
+
+    def get(self, id):
+        film_industry = FilmIndustry.query.get(id)
+        film_industry_schema = FilmIndustrySchema()
+        result = film_industry_schema.dump(film_industry)
+        return {"film_industry_detail": result.data}
+
+    def put(self, id):
+        args = self.reqparse.parse_args()
+        film_industry = FilmIndustry.query.get(id)
+        film_industry.name = args['name']
+        film_industry.location = args['location']
+        db.session.commit()
+        return {'message': 'data updated'}
+
+    def delete(self, id):
+        film_industry = FilmIndustry.query.get(id)
+        db.session.delete(film_industry)
+        db.session.commit()
+        return {'message': 'data deleted'}
+
+api.add_resource(FilmIndustryListCreateAPI, '/movie_recommend/api/v1/film_industries', endpoint='film_industries')
+api.add_resource(FilmIndustryAPI, '/movie_recommend/api/v1/film_industries/<int:id>', endpoint='film_industries_settings')
+
+
+
+
+# ############### Movie API resource ##################
+
+class MovieListCreateAPI(Resource):
+    #decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('film_industry_id', type=int, required=True,
+                                   help='No film industry provided',
+                                   location='json')
+        self.reqparse.add_argument('name', type=str,
+                                   location='json')
+        self.reqparse.add_argument('genre_id', type=int,
+                                   location='json')
+        self.reqparse.add_argument('actor', type=str, default="",
+                                   location='json')
+        super(MovieListCreateAPI, self).__init__()
+
+    def get(self):
+        movies = Movie.query.all()
+        movies_schema = MovieSchema(many=True)
+        result = movies_schema.dump(movies)
+        return {"movies_list": result.data}
+
+    def post(self):
+        args = self.reqparse.parse_args()
+        movie = Movie(str(args['film_industry_id']),str(args['name']) ,str(args['genre_id']), str(args['actor']))
+        db.session.add(movie)
+        db.session.commit()
+        movie_schema = MovieSchema()
+        result = movie_schema.dump(movie)
+
+        return {"data": result.data ,"message":  "data inserted" }, 201
+
+
+class MovieAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('film_industry_id', type=int, location='json')
+        self.reqparse.add_argument('name', type=str, location='json')
+        self.reqparse.add_argument('genre_id', type=int, location='json')
+        self.reqparse.add_argument('actor', type=str, location='json')
+        super(MovieAPI, self).__init__()
+
+    def get(self, id):
+        movie = Movie.query.get(id)
+        movie_schema = MovieSchema(many=True)
+        result = movie_schema.dump(movie)
+        return {"movies_list": result.data}
+
+    def put(self, id):
+        task = [task for task in tasks if task['id'] == id]
+        if len(task) == 0:
+            abort(404)
+        task = task[0]
+        args = self.reqparse.parse_args()
+        for k, v in args.items():
+            if v is not None:
+                task[k] = v
+        return {'task': marshal(task, task_fields)}
+
+    def delete(self, id):
+        task = [task for task in tasks if task['id'] == id]
+        if len(task) == 0:
+            abort(404)
+        tasks.remove(task[0])
+        return {'result': True}
+
+
+api.add_resource(MovieListCreateAPI, '/movie_recommend/api/v1/movies', endpoint='movies')
+
+
+
 # ############### TvSeries API resource ##################
 #
 # class TVSeriesListCreateAPI(Resource):
@@ -484,67 +569,63 @@ api.add_resource(UserPreferencesListCreateAPI, '/movie_recommend/api/v1/user_pre
 #         return {'result': True}
 #
 #
-# ############### Genre API resource ##################
-#
-# class GenreListCreateAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, required=True,
-#                                    help='No task title provided',
-#                                    location='json')
-#         self.reqparse.add_argument('description', type=str, default="",
-#                                    location='json')
-#         super(TaskListAPI, self).__init__()
-#
-#     def get(self):
-#         return {'tasks': [marshal(task, task_fields) for task in tasks]}
-#
-#     def post(self):
-#         args = self.reqparse.parse_args()
-#         task = {
-#             'id': tasks[-1]['id'] + 1,
-#             'title': args['title'],
-#             'description': args['description'],
-#             'done': False
-#         }
-#         tasks.append(task)
-#         return {'task': marshal(task, task_fields)}, 201
-#
-#
-#
-# class GenreAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, location='json')
-#         self.reqparse.add_argument('description', type=str, location='json')
-#         self.reqparse.add_argument('done', type=bool, location='json')
-#         super(TaskAPI, self).__init__()
-#
-#     def get(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         return {'task': marshal(task[0], task_fields)}
-#
-#     def put(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         task = task[0]
-#         args = self.reqparse.parse_args()
-#         for k, v in args.items():
-#             if v is not None:
-#                 task[k] = v
-#         return {'task': marshal(task, task_fields)}
-#
-#     def delete(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         tasks.remove(task[0])
-#         return {'result': True}
-#
+
+############### Genre API resource ##################
+
+class GenreListCreateAPI(Resource):
+    #decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('name', type=str, required=True,
+                                   help='No name Provided',
+                                   location='json')
+        super(GenreListCreateAPI, self).__init__()
+
+    def get(self):
+        genres = Genre.query.all()
+        genre_schema = GenreSchema(many=True)
+        result = genre_schema.dump(genres)
+        return {"genre_list": result.data}
+
+    def post(self):
+        args = self.reqparse.parse_args()
+        genre = Genre(str(args['name']))
+        db.session.add(genre)
+        db.session.commit()
+        genre_schema = GenreSchema()
+        result = genre_schema.dump(genre)
+
+        return {"data": result.data ,"message":  "data inserted" }, 201
+
+
+
+class GenreAPI(Resource):
+    #decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('name', type=str, location='json')
+        super(GenreAPI, self).__init__()
+
+    def get(self, id):
+        genre = Genre.query.get(id)
+        genre_schema = GenreSchema(many=True)
+        result = genre_schema.dump(genre)
+        return {"genre_list": result.data}
+
+    def put(self, id):
+        args = self.reqparse.parse_args()
+        genre = Genre.query.get(id)
+        genre.name = args['name']
+        db.session.commit()
+        return {'message': 'data updated'}
+
+    def delete(self, id):
+        genre = Genre.query.get(id)
+        db.session.delete(genre)
+        db.session.commit()
+        return {'message': 'data deleted'}
+
+api.add_resource(GenreListCreateAPI, '/movie_recommend/api/v1/genres', endpoint='genres')
+api.add_resource(GenreAPI, '/movie_recommend/api/v1/genres/<int:id>', endpoint='genre_settings')
