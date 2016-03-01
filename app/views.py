@@ -10,13 +10,6 @@ from .serializers import UserSchema
 # # refer microblog app by miguelgrinberg to make models and views flask, just take care this
 # # time we are building the API server not just a basic site and take care to use only class based
 # # views only
-# parser = reqparse.RequestParser()
-# parser.add_argument('username')
-# parser.add_argument('first_name')
-# parser.add_argument('last_name')
-# parser.add_argument('location')
-# parser.add_argument('password')
-# parser.add_argument('email')
 
 # ############### Users and Login API resource ##################
 
@@ -62,39 +55,45 @@ class UsersListCreateAPI(Resource):
 
 api.add_resource(UsersListCreateAPI, '/movie_recommend/api/v1/users')
 
-# class UsersAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, location='json')
-#         self.reqparse.add_argument('description', type=str, location='json')
-#         self.reqparse.add_argument('done', type=bool, location='json')
-#         super(TaskAPI, self).__init__()
-#
-#     def get(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         return {'task': marshal(task[0], task_fields)}
-#
-#     def put(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         task = task[0]
-#         args = self.reqparse.parse_args()
-#         for k, v in args.items():
-#             if v is not None:
-#                 task[k] = v
-#         return {'task': marshal(task, task_fields)}
-#
-#     def delete(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         tasks.remove(task[0])
-#         return {'result': True}
+
+class UsersAPI(Resource):
+    #decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('username', type=str, location='json')
+        self.reqparse.add_argument('first_name', type=str, location='json')
+        self.reqparse.add_argument('last_name', type=bool, location='json')
+        self.reqparse.add_argument('location', type=str, location='json')
+        self.reqparse.add_argument('password', type=bool, location='json')
+        self.reqparse.add_argument('email', type=str, location='json')
+        super(UsersAPI, self).__init__()
+
+    def get(self, id):
+        user = User.query.get(id)
+        user_schema = UserSchema()
+        result = user_schema.dump(user)
+        return {"users_detail": result.data}
+
+    def put(self, id):
+        args = self.reqparse.parse_args()
+        user = User.query.get(id)
+        user.username = args['username']
+        user.first_name = args['first_name']
+        user.last_name = args['last_name']
+        user.location = args['location']
+        user.email = args['email']
+        db.session.commit()
+        return {'message': 'data updated'}
+
+    def delete(self, id):
+        user = User.query.get(id)
+        db.session.delete(user)
+        db.session.commit()
+        return {'message': 'data deleted'}
+
+api.add_resource(UsersListCreateAPI, '/movie_recommend/api/v1/users', endpoint='users')
+api.add_resource(UsersAPI, '/movie_recommend/api/v1/users/<int:id>', endpoint='user')
 #
 #
 # ############### UserPreferences API resource ##################
