@@ -15,10 +15,10 @@ user_favourite_actor = db.Table('user_favourite_actor',
     db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'))
 )
 
-user_favourite_actoress = db.Table('user_favourite_actoress',
-    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
-    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'))
-)
+# user_favourite_actoress = db.Table('user_favourite_actoress',
+#     db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
+#     db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'))
+# )
 
 user_favourite_movies = db.Table('user_favourite_movies',
     db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
@@ -115,13 +115,13 @@ class UserPreferences(db.Model):
         backref = db.backref('UserPreferences', lazy = 'dynamic'),
         # lazy = 'dynamic'
         )
-    favourite_actress = db.relationship('Actor',
-        secondary = user_favourite_actoress,
-        # primaryjoin = (tv_series_actors.c.actor_id == id),
-        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
-        backref = db.backref('UserPreferences', lazy = 'dynamic'),
-        # lazy = 'dynamic'
-        )
+    # favourite_actress = db.relationship('Actor',
+    #     secondary = user_favourite_actoress,
+    #     # primaryjoin = (tv_series_actors.c.actor_id == id),
+    #     # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+    #     backref = db.backref('UserPreferences', lazy = 'dynamic'),
+    #     # lazy = 'dynamic'
+    #     )
     favourite_movies = db.relationship('Movie',
         secondary = user_film_industry,
         # primaryjoin = (tv_series_actors.c.actor_id == id),
@@ -188,8 +188,9 @@ class FilmIndustry(db.Model):
 
 class TVSeries(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    film_industry_id = db.Column(db.Integer, db.ForeignKey('film_industry.id'))
     name = db.Column(db.String(80))
-    genre = db.Column(db.Integer, db.ForeignKey('genre.id'))
+    genre_id = db.Column(db.Integer, db.ForeignKey('genre.id'))
     actor = db.relationship('Actor',
         secondary = tv_series_actors,
         # primaryjoin = (tv_series_actors.c.actor_id == id),
@@ -203,8 +204,9 @@ class TVSeries(db.Model):
 
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    film_industry_id = db.Column(db.Integer, db.ForeignKey('film_industry.id'))
     name = db.Column(db.String(80))
-    genre = db.Column(db.Integer, db.ForeignKey('genre.id'))
+    genre_id = db.Column(db.Integer, db.ForeignKey('genre.id'))
     actor = db.relationship('Actor',
         secondary = video_actors,
         # primaryjoin = (tv_series_actors.c.actor_id == id),
@@ -214,18 +216,15 @@ class Video(db.Model):
         )
 
 
-
-
-
-
     def __str__(self):
         pass
 
 
 class Movie(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    film_industry_id = db.Column(db.Integer, db.ForeignKey('film_industry.id'))
     name = db.Column(db.String(80))
-    genre = db.Column(db.Integer, db.ForeignKey('genre.id'))
+    genre_id = db.Column(db.Integer, db.ForeignKey('genre.id'))
     actor = db.relationship('Actor',
         secondary = movie_actors,
         # primaryjoin = (tv_series_actors.c.actor_id == id),

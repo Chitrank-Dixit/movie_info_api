@@ -5,7 +5,7 @@ from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
 from .models import User, UserPreferences, FilmIndustry
-from .serializers import UserSchema
+from .serializers import UserSchema , UserPreferencesSchema
 
 # # refer microblog app by miguelgrinberg to make models and views flask, just take care this
 # # time we are building the API server not just a basic site and take care to use only class based
@@ -53,7 +53,7 @@ class UsersListCreateAPI(Resource):
         return {"data": result.data ,"message":  "data inserted" }, 201
 
 
-api.add_resource(UsersListCreateAPI, '/movie_recommend/api/v1/users')
+
 
 
 class UsersAPI(Resource):
@@ -97,34 +97,37 @@ api.add_resource(UsersAPI, '/movie_recommend/api/v1/users/<int:id>', endpoint='u
 
 
 ############### UserPreferences API resource ##################
-#
-# class UserPreferencesListCreateAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, required=True,
-#                                    help='No task title provided',
-#                                    location='json')
-#         self.reqparse.add_argument('description', type=str, default="",
-#                                    location='json')
-#         super(TaskListAPI, self).__init__()
-#
-#     def get(self):
-#         return {'tasks': [marshal(task, task_fields) for task in tasks]}
-#
-#     def post(self):
-#         args = self.reqparse.parse_args()
-#         task = {
-#             'id': tasks[-1]['id'] + 1,
-#             'title': args['title'],
-#             'description': args['description'],
-#             'done': False
-#         }
-#         tasks.append(task)
-#         return {'task': marshal(task, task_fields)}, 201
-#
-#
+
+class UserPreferencesListCreateAPI(Resource):
+    #decorators = [auth.login_required]
+
+    # def __init__(self):
+    #     self.reqparse = reqparse.RequestParser()
+    #     self.reqparse.add_argument('title', type=str, required=True,
+    #                                help='No task title provided',
+    #                                location='json')
+    #     self.reqparse.add_argument('description', type=str, default="",
+    #                                location='json')
+    #     super(TaskListAPI, self).__init__()
+
+    def get(self):
+        user_preferences = UserPreferences.query.all()
+        user_preferences_schema = UserPreferencesSchema(many=True)
+        result = user_preferences_schema.dump(user_preferences)
+        return {"users_preferences_list": result.data}
+
+    # def post(self):
+    #     args = self.reqparse.parse_args()
+    #     task = {
+    #         'id': tasks[-1]['id'] + 1,
+    #         'title': args['title'],
+    #         'description': args['description'],
+    #         'done': False
+    #     }
+    #     tasks.append(task)
+    #     return {'task': marshal(task, task_fields)}, 201
+
+api.add_resource(UserPreferencesListCreateAPI, '/movie_recommend/api/v1/user_preferences', endpoint='user_preferences')
 #
 # class UserPreferencesAPI(Resource):
 #     decorators = [auth.login_required]

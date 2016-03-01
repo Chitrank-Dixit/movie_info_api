@@ -8,7 +8,8 @@ class UserSchema(ma.Schema):
         model = User
         fields = ('id', 'username', 'first_name', 'last_name','email')
 
+
 class UserPreferencesSchema(ma.Schema):
     class Meta:
         model = UserPreferences
-        fields = ('id', 'username', 'first_name', 'last_name','email')
+        fields = ('id', 'user')
