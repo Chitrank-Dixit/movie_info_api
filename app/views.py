@@ -63,9 +63,9 @@ class UsersAPI(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('username', type=str, location='json')
         self.reqparse.add_argument('first_name', type=str, location='json')
-        self.reqparse.add_argument('last_name', type=bool, location='json')
+        self.reqparse.add_argument('last_name', type=str, location='json')
         self.reqparse.add_argument('location', type=str, location='json')
-        self.reqparse.add_argument('password', type=bool, location='json')
+        # self.reqparse.add_argument('password', type=bool, location='json')
         self.reqparse.add_argument('email', type=str, location='json')
         super(UsersAPI, self).__init__()
 
