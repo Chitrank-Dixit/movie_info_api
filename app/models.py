@@ -1,5 +1,6 @@
 from . import db
 import re
+from hashlib import md5
 from sqlalchemy.orm import validates
 
 ################ relationship table (many to many relationships) ###############
@@ -9,8 +10,35 @@ user_film_industry = db.Table('user_film_industry',
     db.Column('film_industry_id', db.Integer, db.ForeignKey('film_industry.id'))
 )
 
+user_favourite_actor = db.Table('user_favourite_actor',
+    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'))
+)
+
+user_favourite_actoress = db.Table('user_favourite_actoress',
+    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'))
+)
+
+user_favourite_movies = db.Table('user_favourite_movies',
+    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
+    db.Column('movie_id', db.Integer, db.ForeignKey('movie.id'))
+)
+
+user_favourite_tv_series = db.Table('user_favourite_tv_series',
+    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
+    db.Column('tv_series_id', db.Integer, db.ForeignKey('tv_series.id'))
+)
+
+user_favourite_videos = db.Table('user_favourite_videos',
+    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
+    db.Column('video_id', db.Integer, db.ForeignKey('video.id'))
+)
 
 ################ User and User Preference related data ############
+
+
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -80,11 +108,41 @@ class UserPreferences(db.Model):
         backref = db.backref('UserPreferences', lazy = 'dynamic'),
         # lazy = 'dynamic'
         )
-    # favourite_actor = # multiple choice 'bollywood', 'hollywood' many to many
-    # favourite_actress = # multiple choice 'bollywood', 'hollywood' many to many
-    # favourite_movies = # multiple choice 'bollywood', 'hollywood' many to many
-    # favourite_tv_series = # multiple choice 'bollywood', 'hollywood' many to many
-    # favourite_videos = # multiple choice 'bollywood', 'hollywood' many to many
+    favourite_actor = db.relationship('Actor',
+        secondary = user_favourite_actor,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('UserPreferences', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
+    favourite_actress = db.relationship('Actor',
+        secondary = user_favourite_actoress,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('UserPreferences', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
+    favourite_movies = db.relationship('Movie',
+        secondary = user_film_industry,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('UserPreferences', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
+    favourite_tv_series = db.relationship('TVSeries',
+        secondary = user_film_industry,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('UserPreferences', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
+    favourite_videos = db.relationship('Video',
+        secondary = user_film_industry,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('UserPreferences', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
 
 
     def __init__(self, username, email):

@@ -11,7 +11,7 @@ from .serializers import UserSchema
 # # time we are building the API server not just a basic site and take care to use only class based
 # # views only
 
-# ############### Users and Login API resource ##################
+############### Users and Login API resource ##################
 
 
 class UsersListCreateAPI(Resource):
@@ -94,9 +94,9 @@ class UsersAPI(Resource):
 
 api.add_resource(UsersListCreateAPI, '/movie_recommend/api/v1/users', endpoint='users')
 api.add_resource(UsersAPI, '/movie_recommend/api/v1/users/<int:id>', endpoint='user')
-#
-#
-# ############### UserPreferences API resource ##################
+
+
+############### UserPreferences API resource ##################
 #
 # class UserPreferencesListCreateAPI(Resource):
 #     decorators = [auth.login_required]
