@@ -123,21 +123,21 @@ class UserPreferences(db.Model):
     #     # lazy = 'dynamic'
     #     )
     favourite_movies = db.relationship('Movie',
-        secondary = user_film_industry,
+        secondary = user_favourite_movies,
         # primaryjoin = (tv_series_actors.c.actor_id == id),
         # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
         backref = db.backref('UserPreferences', lazy = 'dynamic'),
         # lazy = 'dynamic'
         )
     favourite_tv_series = db.relationship('TVSeries',
-        secondary = user_film_industry,
+        secondary = user_favourite_tv_series,
         # primaryjoin = (tv_series_actors.c.actor_id == id),
         # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
         backref = db.backref('UserPreferences', lazy = 'dynamic'),
         # lazy = 'dynamic'
         )
     favourite_videos = db.relationship('Video',
-        secondary = user_film_industry,
+        secondary = user_favourite_videos,
         # primaryjoin = (tv_series_actors.c.actor_id == id),
         # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
         backref = db.backref('UserPreferences', lazy = 'dynamic'),
