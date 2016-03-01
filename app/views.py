@@ -1,6 +1,7 @@
 from flask.ext.restful import Resource
 from app import api, app, auth,db
 from app import marshal
+from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
 from .models import User, UserPreferences, FilmIndustry
@@ -43,7 +44,7 @@ class UsersListCreateAPI(Resource):
 
     def get(self):
         users = User.query.all()
-        return {'users':  [marshal(user) for user in users]}
+        return {'users':  jsonify(users)}
 
     def post(self):
         args = self.reqparse.parse_args()

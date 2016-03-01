@@ -1,7 +1,14 @@
-from app import app
-from flask_sqlalchemy import SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
-db = SQLAlchemy(app)
+from . import db
+import re
+from sqlalchemy.orm import validates
+
+################ relationship table (many to many relationships) ###############
+
+user_film_industry = db.Table('user_film_industry',
+    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
+    db.Column('film_industry_id', db.Integer, db.ForeignKey('film_industry.id'))
+)
+
 
 ################ User and User Preference related data ############
 
@@ -14,25 +21,70 @@ class User(db.Model):
     location = db.Column(db.String(80))
     email = db.Column(db.String(120), unique=True)
 
-    def __init__(self, username, email):
+    def __init__(self, username,first_name, last_name, password, location, email):
         self.username = username
+        self.first_name = first_name
+        self.last_name = last_name
+        self.password = password
+        self.location = location
         self.email = email
 
-    def __repr__(self):
+    # @validates('email')
+    # def validate_email(self, email):
+    #     assert '@' in self.email
+    #     return self.email
+
+    @staticmethod
+    def make_valid_nickname(nickname):
+        return re.sub('[^a-zA-Z0-9_\.]', '', nickname)
+
+    @staticmethod
+    def make_unique_nickname(nickname):
+        if User.query.filter_by(nickname = nickname).first() == None:
+            return nickname
+        version = 2
+        while True:
+            new_nickname = nickname + str(version)
+            if User.query.filter_by(nickname = new_nickname).first() == None:
+                break
+            version += 1
+        return new_nickname
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return unicode(self.id)
+
+    def avatar(self, size):
+        return 'http://www.gravatar.com/avatar/' + md5(self.email).hexdigest() + '?d=mm&s=' + str(size)
+
+
+    def __repr__(self):  # pragma: no cover
         return '<User %r>' % self.username
 
 
 class UserPreferences(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    film_industry = # multiple choice 'bollywood', 'hollywood' many to many 
-    favourite_actor = # multiple choice 'bollywood', 'hollywood' many to many 
-    favourite_actress = # multiple choice 'bollywood', 'hollywood' many to many 
-    favourite_movies = # multiple choice 'bollywood', 'hollywood' many to many 
-    favourite_tv_series = # multiple choice 'bollywood', 'hollywood' many to many 
-    favourite_videos = # multiple choice 'bollywood', 'hollywood' many to many 
-
-
+    film_industry = db.relationship('FilmIndustry',
+        secondary = user_film_industry,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('UserPreferences', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
+    # favourite_actor = # multiple choice 'bollywood', 'hollywood' many to many
+    # favourite_actress = # multiple choice 'bollywood', 'hollywood' many to many
+    # favourite_movies = # multiple choice 'bollywood', 'hollywood' many to many
+    # favourite_tv_series = # multiple choice 'bollywood', 'hollywood' many to many
+    # favourite_videos = # multiple choice 'bollywood', 'hollywood' many to many
 
 
     def __init__(self, username, email):
@@ -43,113 +95,206 @@ class UserPreferences(db.Model):
         return '<User %r>' % self.username
 
 
-########################### Tv Series, Movie ,Video , Genre related data ###############
+################ relationship table (many to many relationships) ###############
+
+tv_series_actors = db.Table('tv_series_actors',
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
+    db.Column('tv_series_id', db.Integer, db.ForeignKey('tv_series.id'))
+)
+
+
+video_actors = db.Table('videos_actors',
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
+    db.Column('video_id', db.Integer, db.ForeignKey('video.id'))
+)
+
+
+movie_actors = db.Table('movie_actors',
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
+    db.Column('movie_id', db.Integer, db.ForeignKey('movie.id'))
+)
+
+
+########################### Film Industry ,Tv Series, Movie ,Video , Genre related data ###############
+
+class FilmIndustry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80))
+    location = db.Column(db.String(80))
+
+
+    def __str__(self):
+        pass
+
+
 
 class TVSeries(db.Model):
-	id = db.Column(db.Integer, primary_key=True)
-	name = # name of the movie
-	genre = # genre of the movie
-	actor = # many to many rel 
-
-
-
-
-    class Meta:
-        verbose_name = "MODELNAME"
-        verbose_name_plural = "MODELNAMEs"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80))
+    genre = db.Column(db.Integer, db.ForeignKey('genre.id'))
+    actor = db.relationship('Actor',
+        secondary = tv_series_actors,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('TVSeries', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
 
     def __str__(self):
         pass
-    
 
 class Video(db.Model):
-	id = db.Column(db.Integer, primary_key=True)
-	name = # name of the movie
-	genre = # genre of the movie
-	actor = # many to many rel 
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80))
+    genre = db.Column(db.Integer, db.ForeignKey('genre.id'))
+    actor = db.relationship('Actor',
+        secondary = video_actors,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('Video', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
 
 
 
 
-    class Meta:
-        verbose_name = "MODELNAME"
-        verbose_name_plural = "MODELNAMEs"
+
 
     def __str__(self):
         pass
-    
+
 
 class Movie(db.Model):
-	id = db.Column(db.Integer, primary_key=True)
-	name = # name of the movie
-	genre = # genre of the movie
-	actor = # many to many rel 
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80))
+    genre = db.Column(db.Integer, db.ForeignKey('genre.id'))
+    actor = db.relationship('Actor',
+        secondary = movie_actors,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('Movie', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
 
 
-
-
-    class Meta:
-        verbose_name = "MODELNAME"
-        verbose_name_plural = "MODELNAMEs"
 
     def __str__(self):
         pass
-    
+
 
 class Genre(db.Model):
-	id = db.Column(db.Integer, primary_key=True)
-	movie = # many to many
-	video = # many to many 
-	tv_series = # many to many rel 
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True)
 
-
-
-
-    class Meta:
-        verbose_name = "MODELNAME"
-        verbose_name_plural = "MODELNAMEs"
 
     def __str__(self):
         pass
 
+
+################ relationship table (many to many relationships) ###############
+
+awarded_actors = db.Table('awarded_actors',
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
+    db.Column('award_id', db.Integer, db.ForeignKey('award.id')),
+
+)
 
 
 ###################### Awards , Awardsname related data ###################
 
 
-class Awards(db.Model):
-	id = db.Column(db.Integer, primary_key=True)
-	name = # name of the awards
-	awarded_to = # many to many relationship with actor
-
-
-    class Meta:
-        verbose_name = "MODELNAME"
-        verbose_name_plural = "MODELNAMEs"
+class Award(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True)
+    awarded_to = db.relationship('Actor',
+        secondary = awarded_actors,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('Award', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
 
     def __str__(self):
         pass
-    
 
+
+################ relationship table (many to many relationships) ###############
+
+actor_movies = db.Table('actor_movies',
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
+    db.Column('movie_id', db.Integer, db.ForeignKey('movie.id')),
+
+)
+
+actor_videos = db.Table('actor_video',
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
+    db.Column('video_id', db.Integer, db.ForeignKey('video.id')),
+
+)
+
+actor_tvseries = db.Table('actor_tvseries',
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
+    db.Column('tv_series_id', db.Integer, db.ForeignKey('tv_series.id')),
+
+)
+
+actor_awards = db.Table('actor_awards',
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
+    db.Column('award_id', db.Integer, db.ForeignKey('award.id')),
+
+)
+
+actor_relationship = db.Table('actor_relationship',
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
+
+)
 
 ##################### Actor related data ##################
 
 class Actor(db.Model):
-	id = db.Column(db.Integer, primary_key=True)
-	name = # name of actor
-	gender = # gender of actor
-	age = # age of the actor
-	date_of_birth = # date of birth of the actor
-	movies = # many to many relationship
-	videos = # many to many relationship
-	tv_series = # many to many relationship
-	awards = # number of awards many to many rel
-	in_family_relation = # the actor who is the member of the current actor family (self many to many relationship)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80))
+    gender = db.Column(db.String(80))
+    age = db.Column(db.Integer)
+    date_of_birth = db.Column(db.DateTime)
+    movies = db.relationship('Movie',
+        secondary = actor_movies,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('Actor', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
+    videos = db.relationship('Video',
+        secondary = actor_videos,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('Actor', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
+    tv_series = db.relationship('TVSeries',
+        secondary = actor_tvseries,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('Actor', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
+    awards = db.relationship('Award',
+        secondary = actor_awards,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('Actor', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
+    in_family_relation = db.relationship('Actor',
+        secondary = actor_relationship,
+        # primaryjoin = (tv_series_actors.c.actor_id == id),
+        # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
+        backref = db.backref('Actor', lazy = 'dynamic'),
+        # lazy = 'dynamic'
+        )
 
 
-    class Meta:
-        verbose_name = "MODELNAME"
-        verbose_name_plural = "MODELNAMEs"
 
     def __str__(self):
         pass

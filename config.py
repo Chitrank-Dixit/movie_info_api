@@ -18,6 +18,7 @@ else:
     SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
 SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
 SQLALCHEMY_RECORD_QUERIES = True
+SQLALCHEMY_TRACK_MODIFICATIONS = True
 WHOOSH_BASE = os.path.join(basedir, 'search.db')
 
 # Whoosh does not work on Heroku
