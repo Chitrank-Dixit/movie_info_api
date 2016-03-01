@@ -5,6 +5,7 @@ from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
 from .models import User, UserPreferences, FilmIndustry
+from .serializers import UserSchema
 
 # # refer microblog app by miguelgrinberg to make models and views flask, just take care this
 # # time we are building the API server not just a basic site and take care to use only class based
@@ -44,15 +45,19 @@ class UsersListCreateAPI(Resource):
 
     def get(self):
         users = User.query.all()
-        return {'users':  jsonify(users)}
+        users_schema = UserSchema(many=True)
+        result = users_schema.dump(users)
+        return {"users_list": result.data}
 
     def post(self):
         args = self.reqparse.parse_args()
         user = User(str(args['username']) , str(args['first_name']), str(args['last_name']), str(args['password']), str(args['location']), str(args['email']) )
         db.session.add(user)
         db.session.commit()
+        user_schema = UserSchema()
+        result = user_schema.dump(user)
 
-        return {"message":  "data inserted" }, 201
+        return {"data": result.data ,"message":  "data inserted" }, 201
 
 
 api.add_resource(UsersListCreateAPI, '/movie_recommend/api/v1/users')
