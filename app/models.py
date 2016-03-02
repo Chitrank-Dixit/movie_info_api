@@ -168,8 +168,8 @@ video_actors = db.Table('videos_actors',
 
 
 movie_actors = db.Table('movie_actors',
-    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
-    db.Column('movie_id', db.Integer, db.ForeignKey('movie.id'))
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'), nullable=True),
+    db.Column('movie_id', db.Integer, db.ForeignKey('movie.id'), nullable=True)
 )
 
 
@@ -230,10 +230,13 @@ class Movie(db.Model):
         # primaryjoin = (tv_series_actors.c.actor_id == id),
         # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
         backref = db.backref('Movie', lazy = 'dynamic'),
-        # lazy = 'dynamic'
+        # lazy = 'dynamic',
         )
 
-
+    def __init__(self, film_industry_id, name, genre_id):
+        self.film_industry_id = film_industry_id
+        self.name = name
+        self.genre_id = genre_id
 
     def __str__(self):
         pass
@@ -350,7 +353,6 @@ class Actor(db.Model):
         backref = db.backref('Actor', lazy = 'dynamic'),
         # lazy = 'dynamic'
         )
-
 
 
     def __str__(self):
