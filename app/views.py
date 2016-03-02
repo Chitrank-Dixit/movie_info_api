@@ -4,7 +4,7 @@ from app import marshal
 from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
-from .models import User, UserPreferences, FilmIndustry, Genre, Movie
+from .models import User, UserPreferences, FilmIndustry, Genre, Movie, Actor
 from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema
 
 # # refer microblog app by miguelgrinberg to make models and views flask, just take care this
@@ -253,7 +253,7 @@ class MovieListCreateAPI(Resource):
                                    location='json')
         self.reqparse.add_argument('genre_id', type=int,
                                    location='json')
-        self.reqparse.add_argument('actor', type=str, default="",
+        self.reqparse.add_argument('actor', type=list, default=[],
                                    location='json')
         super(MovieListCreateAPI, self).__init__()
 
@@ -265,7 +265,15 @@ class MovieListCreateAPI(Resource):
 
     def post(self):
         args = self.reqparse.parse_args()
-        movie = Movie(str(args['film_industry_id']),str(args['name']) ,str(args['genre_id']), str(args['actor']))
+        # read this for foreign key  and many to many: http://flask-sqlalchemy.pocoo.org/2.1/quickstart/
+        # http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#building-a-many-to-many-relationship
+        film_industry = FilmIndustry.query.get(args['film_industry_id'])
+        genre = Genre.query.get(args['genre_id'])
+        movie = Movie(film_industry, args['name'], genre)
+        for item in args['actor']:
+            actor = Actor.query.get(item)
+            if actor is not None:
+                movie.actor.append()
         db.session.add(movie)
         db.session.commit()
         movie_schema = MovieSchema()
