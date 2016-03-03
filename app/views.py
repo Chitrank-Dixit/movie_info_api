@@ -26,7 +26,7 @@ class UsersListCreateAPI(Resource):
                                    location='json')
         self.reqparse.add_argument('last_name', type=str, default="",
                                    location='json')
-        self.reqparse.add_argument('location', type=str, default="",
+        self.reqparse.add_argument('address', type=str, default="",
                                    location='json')
         self.reqparse.add_argument('password', type=str, default="",
                                    location='json')
@@ -44,7 +44,7 @@ class UsersListCreateAPI(Resource):
 
     def post(self):
         args = self.reqparse.parse_args()
-        user = User(str(args['username']) , str(args['first_name']), str(args['last_name']), str(args['password']), str(args['location']), str(args['email']) )
+        user = User(str(args['username']) , str(args['first_name']), str(args['last_name']), str(args['password']), str(args['address']), str(args['email']) )
         db.session.add(user)
         db.session.commit()
         user_schema = UserSchema()
@@ -64,7 +64,7 @@ class UsersAPI(Resource):
         self.reqparse.add_argument('username', type=str, location='json')
         self.reqparse.add_argument('first_name', type=str, location='json')
         self.reqparse.add_argument('last_name', type=str, location='json')
-        self.reqparse.add_argument('location', type=str, location='json')
+        self.reqparse.add_argument('address', type=str, location='json')
         # self.reqparse.add_argument('password', type=bool, location='json')
         self.reqparse.add_argument('email', type=str, location='json')
         super(UsersAPI, self).__init__()
@@ -81,7 +81,7 @@ class UsersAPI(Resource):
         user.username = args['username']
         user.first_name = args['first_name']
         user.last_name = args['last_name']
-        user.location = args['location']
+        user.address = args['address']
         user.email = args['email']
         db.session.commit()
         return {'message': 'data updated'}

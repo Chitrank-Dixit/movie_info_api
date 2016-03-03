@@ -6,7 +6,7 @@ from .models import User, UserPreferences, Genre, FilmIndustry, Movie, Video, TV
 class UserSchema(ma.Schema):
     class Meta:
         model = User
-        fields = ('id', 'username', 'first_name', 'last_name','email')
+        fields = ('id', 'username', 'first_name', 'last_name','email','address')
 
 
 class GenreSchema(ma.Schema):

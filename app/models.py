@@ -41,15 +41,15 @@ class User(db.Model):
     first_name = db.Column(db.String(80))
     last_name = db.Column(db.String(80))
     password = db.Column(db.String(80))
-    location = db.Column(db.String(80))
+    address = db.Column(db.String(80))
     email = db.Column(db.String(120), unique=True)
 
-    def __init__(self, username,first_name, last_name, password, location, email):
+    def __init__(self, username,first_name, last_name, password, address, email):
         self.username = username
         self.first_name = first_name
         self.last_name = last_name
         self.password = password
-        self.location = location
+        self.address = address
         self.email = email
 
     # @validates('email')
