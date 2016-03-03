@@ -15,11 +15,6 @@ user_favourite_actor = db.Table('user_favourite_actor',
     db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'))
 )
 
-# user_favourite_actoress = db.Table('user_favourite_actoress',
-#     db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
-#     db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'))
-# )
-
 user_favourite_movies = db.Table('user_favourite_movies',
     db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
     db.Column('movie_id', db.Integer, db.ForeignKey('movie.id'))
@@ -116,13 +111,6 @@ class UserPreferences(db.Model):
         backref = db.backref('UserPreferences', lazy = 'dynamic'),
         # lazy = 'dynamic'
         )
-    # favourite_actress = db.relationship('Actor',
-    #     secondary = user_favourite_actoress,
-    #     # primaryjoin = (tv_series_actors.c.actor_id == id),
-    #     # secondaryjoin = (tv_series_actors.c.tv_series_actors_id == id),
-    #     backref = db.backref('UserPreferences', lazy = 'dynamic'),
-    #     # lazy = 'dynamic'
-    #     )
     favourite_movies = db.relationship('Movie',
         secondary = user_favourite_movies,
         # primaryjoin = (tv_series_actors.c.actor_id == id),

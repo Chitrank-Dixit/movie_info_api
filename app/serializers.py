@@ -8,6 +8,7 @@ class UserSchema(ma.Schema):
         model = User
         fields = ('id', 'username', 'first_name', 'last_name','email')
 
+
 class GenreSchema(ma.Schema):
     class Meta:
         model = Genre
@@ -58,7 +59,7 @@ class TVSeriesSchema(ma.Schema):
 
 class AwardsSchema(ma.Schema):
     class Meta:
-        model = TVSeries
+        model = Award
         fields = ('id', 'name', 'awarded_to')
 
     awarded_to = ma.Nested(ActorSchema)
@@ -67,7 +68,7 @@ class AwardsSchema(ma.Schema):
 class UserPreferencesSchema(ma.Schema):
     class Meta:
         model = UserPreferences
-        fields = ('id', 'user','film_industry','favourite_actor','favourite_movies','favourite_tv_series','favourite_videos')
+        fields = ('id', 'user' , 'film_industry' , 'favourite_actor','favourite_movies','favourite_tv_series','favourite_videos')
 
     user = ma.Nested(UserSchema)
     film_industry = ma.Nested(FilmIndustrySchema)

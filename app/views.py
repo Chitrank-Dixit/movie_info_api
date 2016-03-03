@@ -284,7 +284,7 @@ class FilmIndustryListCreateAPI(Resource):
 
     def post(self):
         args = self.reqparse.parse_args()
-        film_industry = FilmIndustry(str(args['name']) ,str(args['location']) )
+        film_industry = FilmIndustry(str(args['name']),str(args['location']))
         db.session.add(film_industry)
         db.session.commit()
         film_industry_schema = FilmIndustrySchema()
