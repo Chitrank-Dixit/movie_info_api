@@ -4,8 +4,8 @@ from app import marshal
 from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
-from .models import User, UserPreferences, FilmIndustry, Genre, Movie, TVSeries, Video ,Actor
-from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema, TVSeriesSchema,VideoSchema
+from .models import User, UserPreferences, FilmIndustry, Genre, Movie, TVSeries, Video , Award ,Actor
+from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema, TVSeriesSchema,VideoSchema, AwardsSchema
 
 # # refer microblog app by miguelgrinberg to make models and views flask, just take care this
 # # time we are building the API server not just a basic site and take care to use only class based
@@ -480,70 +480,76 @@ class VideoAPI(Resource):
         db.session.commit()
         return {'message': 'data deleted'}
 
-# ############### Awards API resource ##################
-#
-# class AwardsListCreateAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, required=True,
-#                                    help='No task title provided',
-#                                    location='json')
-#         self.reqparse.add_argument('description', type=str, default="",
-#                                    location='json')
-#         super(TaskListAPI, self).__init__()
-#
-#     def get(self):
-#         return {'tasks': [marshal(task, task_fields) for task in tasks]}
-#
-#     def post(self):
-#         args = self.reqparse.parse_args()
-#         task = {
-#             'id': tasks[-1]['id'] + 1,
-#             'title': args['title'],
-#             'description': args['description'],
-#             'done': False
-#         }
-#         tasks.append(task)
-#         return {'task': marshal(task, task_fields)}, 201
-#
-#
-#
-# class AwardsAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, location='json')
-#         self.reqparse.add_argument('description', type=str, location='json')
-#         self.reqparse.add_argument('done', type=bool, location='json')
-#         super(TaskAPI, self).__init__()
-#
-#     def get(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         return {'task': marshal(task[0], task_fields)}
-#
-#     def put(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         task = task[0]
-#         args = self.reqparse.parse_args()
-#         for k, v in args.items():
-#             if v is not None:
-#                 task[k] = v
-#         return {'task': marshal(task, task_fields)}
-#
-#     def delete(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         tasks.remove(task[0])
-#         return {'result': True}
-#
+############### Awards API resource ##################
+
+class AwardsListCreateAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('name', type=str, required=True,
+                                   help='No name added',
+                                   location='json')
+        self.reqparse.add_argument('awarded_to', type=list, default=[],
+                                   location='json')
+        super(AwardsListCreateAPI, self).__init__()
+
+    def get(self):
+        awards = Award.query.all()
+        awards_schema = AwardsSchema(many=True)
+        result = awards_schema.dump(awards)
+        return {"awards_list": result.data}
+
+    def post(self):
+        args = self.reqparse.parse_args()
+        award = Award(str(args['name']))
+        for item in args['awarded_to']:
+            actor = Actor.query.get(item)
+            if actor is not None:
+                award.awarded_to.append(actor)
+        db.session.add(award)
+        db.session.commit()
+        award_schema = AwardsSchema()
+        result = award_schema.dump(award)
+
+        return {"data": result.data ,"message":  "data inserted" }, 201
+
+
+
+
+class AwardsAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('name', type=str, location='json')
+        self.reqparse.add_argument('awarded_to', type=list, location='json')
+        super(AwardsAPI, self).__init__()
+
+    def get(self, id):
+        award = Award.query.get(id)
+        award_schema = AwardsSchema()
+        result = award_schema.dump(award)
+        return {"awards_detail": result.data}
+
+    def put(self, id):
+        args = self.reqparse.parse_args()
+        award = Award.query.get(id)
+        award.name = args['name']
+        for item in args['actor']:
+            actor = Actor.query.get(item)
+            if actor is not None:
+                award.awarded_to.append(actor)
+        db.session.commit()
+        return {'message': 'data updated'}
+
+    def delete(self, id):
+        award = Award.query.get(id)
+        db.session.delete(award)
+        db.session.commit()
+        return {'message': 'data deleted'}
+
+
 # ############### Actors API resource ##################
 #
 # class ActorsListCreateAPI(Resource):
