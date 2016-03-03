@@ -103,11 +103,20 @@ class UserPreferencesListCreateAPI(Resource):
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('title', type=str, required=True,
-                                   help='No task title provided',
+        self.reqparse.add_argument('user_id', type=int, required=True,
+                                   help='No user_id provided',
                                    location='json')
-        self.reqparse.add_argument('description', type=str, default="",
+        self.reqparse.add_argument('film_industry', type=list, default=[],
                                    location='json')
+        self.reqparse.add_argument('favourite_actor', type=list, default=[],
+                                   location='json')
+        self.reqparse.add_argument('favourite_movies', type=list, default=[],
+                                   location='json')
+        self.reqparse.add_argument('favourite_tv_series', type=list, default=[],
+                                   location='json')
+        self.reqparse.add_argument('favourite_videos', type=list, default=[],
+                                   location='json')
+
         super(UserPreferencesListCreateAPI, self).__init__()
 
     def get(self):
@@ -116,57 +125,140 @@ class UserPreferencesListCreateAPI(Resource):
         result = user_preferences_schema.dump(user_preferences)
         return {"users_preferences_list": result.data}
 
-    # def post(self):
-    #     args = self.reqparse.parse_args()
-    #     task = {
-    #         'id': tasks[-1]['id'] + 1,
-    #         'title': args['title'],
-    #         'description': args['description'],
-    #         'done': False
-    #     }
-    #     tasks.append(task)
-    #     return {'task': marshal(task, task_fields)}, 201
+    def post(self):
+        args = self.reqparse.parse_args()
+        user = User.query.get(args['user_id'])
+        user_preferences = UserPreferences(user.id)
+
+        for item in args['film_industry']:
+            try:
+                film_industry = FilmIndustry.query.get(item)
+                if film_industry is not None:
+                    user_preferences.film_industry.append(film_industry)
+            except Exception,e:
+                db.session.rollback()
 
 
+        for item in args['favourite_actor']:
+            try:
+                actor = Actor.query.get(item)
+                if actor is not None:
+                    user_preferences.favourite_actor.append(actor)
+            except Exception, e:
+                db.session.rollback()
 
-# class UserPreferencesAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, location='json')
-#         self.reqparse.add_argument('description', type=str, location='json')
-#         self.reqparse.add_argument('done', type=bool, location='json')
-#         super(TaskAPI, self).__init__()
-#
-#     def get(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         return {'task': marshal(task[0], task_fields)}
-#
-#     def put(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         task = task[0]
-#         args = self.reqparse.parse_args()
-#         for k, v in args.items():
-#             if v is not None:
-#                 task[k] = v
-#         return {'task': marshal(task, task_fields)}
-#
-#     def delete(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         tasks.remove(task[0])
-#         return {'result': True}
-#
-#
+        for item in args['favourite_movies']:
+            try:
+                movie = Movie.query.get(item)
+                if movie is not None:
+                    user_preferences.favourite_movies.append(movie)
+            except Exception,e:
+                db.session.rollback()
+
+        for item in args['favourite_videos']:
+            try:
+                video = Video.query.get(item)
+                if video is not None:
+                    user_preferences.favourite_videos.append(video)
+            except Exception,e:
+                db.session.rollback()
+
+        for item in args['favourite_tv_series']:
+            try:
+                tvseries = TVSeries.query.get(item)
+                if tvseries is not None:
+                    user_preferences.favourite_tv_series.append(tvseries)
+            except Exception,e:
+                db.session.rollback()
+
+        db.session.add(user_preferences)
+        db.session.commit()
+        user_preferences_schema = UserPreferencesSchema()
+        result = user_preferences_schema.dump(user_preferences)
+
+        return {"data": result.data ,"message":  "data inserted" }, 201
+
+
+class UserPreferencesAPI(Resource):
+    #decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('user_id', type=int, location='json')
+        self.reqparse.add_argument('film_industry', type=list, default=[],location='json')
+        self.reqparse.add_argument('favourite_actor', type=list, default=[],location='json')
+        self.reqparse.add_argument('favourite_movies', type=list, default=[],location='json')
+        self.reqparse.add_argument('favourite_tv_series', type=list, default=[],location='json')
+        self.reqparse.add_argument('favourite_videos', type=list, default=[],location='json')
+        super(UserPreferencesAPI, self).__init__()
+
+    def get(self, id):
+        user_preferences = UserPreferences.query.get(id)
+        user_preferences_schema = UserPreferencesSchema()
+        result = user_preferences_schema.dump(user_preferences)
+        return {"users_preferences_details": result.data}
+
+    def put(self, id):
+        args = self.reqparse.parse_args()
+        user_preferences = UserPreferences.query.get(id)
+        user_preferences.user_id = (User.query.get(args['user_id'])).id
+
+
+        for item in args['film_industry']:
+            try:
+                film_industry = FilmIndustry.query.get(item)
+                if film_industry is not None:
+                    user_preferences.film_industry.append(film_industry)
+            except Exception,e:
+                db.session.rollback()
+
+
+        for item in args['favourite_actor']:
+            try:
+                actor = Actor.query.get(item)
+                if actor is not None:
+                    user_preferences.favourite_actor.append(actor)
+            except Exception, e:
+                db.session.rollback()
+
+        for item in args['favourite_movies']:
+            try:
+                movie = Movie.query.get(item)
+                if movie is not None:
+                    user_preferences.favourite_movies.append(movie)
+            except Exception,e:
+                db.session.rollback()
+
+        for item in args['favourite_videos']:
+            try:
+                video = Video.query.get(item)
+                if video is not None:
+                    user_preferences.favourite_videos.append(video)
+            except Exception,e:
+                db.session.rollback()
+
+        for item in args['favourite_tv_series']:
+            try:
+                tvseries = TVSeries.query.get(item)
+                if tvseries is not None:
+                    user_preferences.favourite_tv_series.append(tvseries)
+            except Exception,e:
+                db.session.rollback()
+
+
+        db.session.commit()
+        return {'message': 'data updated'}
+
+    def delete(self, id):
+        user_preferences = UserPreferences.query.get(id)
+        db.session.delete(user_preferences)
+        db.session.commit()
+        return {'message': 'data deleted'}
+
+
 
 api.add_resource(UserPreferencesListCreateAPI, '/movie_recommend/api/v1/user_preferences', endpoint='user_preferences')
-#api.add_resource(UsersAPI, '/movie_recommend/api/v1/user_preferences/<int:id>', endpoint='user_preferences_settings')
+api.add_resource(UserPreferencesAPI, '/movie_recommend/api/v1/user_preferences/<int:id>', endpoint='user_preferences_settings')
 
 
 ############### FilmIndustry API resource ##################
@@ -178,7 +270,7 @@ class FilmIndustryListCreateAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('name', type=str, required=True,
-                                   help='No username provided',
+                                   help='No name provided',
                                    location='json')
         self.reqparse.add_argument('location', type=str, default="",
                                    location='json')

@@ -17,7 +17,7 @@ class GenreSchema(ma.Schema):
 class FilmIndustrySchema(ma.Schema):
     class Meta:
         model = FilmIndustry
-        fields = ('id','name', 'location')
+        fields = ('id', 'name', 'location')
 
 
 class ActorSchema(ma.Schema):
