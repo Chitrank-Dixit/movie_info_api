@@ -637,36 +637,69 @@ class ActorsAPI(Resource):
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('title', type=str, location='json')
-        self.reqparse.add_argument('description', type=str, location='json')
-        self.reqparse.add_argument('done', type=bool, location='json')
+        self.reqparse.add_argument('name', type=str, location='json')
+        self.reqparse.add_argument('gender', type=str, location='json')
+        self.reqparse.add_argument('age', type=int, location='json')
+        self.reqparse.add_argument('date_of_birth', type=str, location='json')
+        self.reqparse.add_argument('movies', type=list, location='json')
+        self.reqparse.add_argument('tv_series', type=list, location='json')
+        self.reqparse.add_argument('videos', type=list, location='json')
+        self.reqparse.add_argument('awards', type=list, location='json')
+
+
         super(ActorsAPI, self).__init__()
 
     def get(self, id):
-        task = [task for task in tasks if task['id'] == id]
-        if len(task) == 0:
-            abort(404)
-        return {'task': marshal(task[0], task_fields)}
+        actor = Actor.query.get(id)
+        actor_schema = ActorSchema()
+        result = actor_schema.dump(actor)
+        return {"awards_list": result.data}
 
     def put(self, id):
-        task = [task for task in tasks if task['id'] == id]
-        if len(task) == 0:
-            abort(404)
-        task = task[0]
         args = self.reqparse.parse_args()
-        for k, v in args.items():
-            if v is not None:
-                task[k] = v
-        return {'task': marshal(task, task_fields)}
+        actor = Actor.query.get(id)
+        actor.name = str(args['name'])
+        actor.gender = str(args['gender'])
+        actor.age = str(args['age'])
+        actor.date_of_birth = str(args['date_of_birth'])
+
+        for item in args['movies']:
+            movie = Movie.query.get(item)
+            if movie is not None:
+                actor.movies.append(movie)
+
+        for item in args['tc_series']:
+            tv_series = TVSeries.query.get(item)
+            if tv_series is not None:
+                actor.tv_series.append(tv_series)
+
+        for item in args['videos']:
+            video = Video.query.get(item)
+            if video is not None:
+                actor.videos.append(video)
+
+        for item in args['awards']:
+            award = Award.query.get(item)
+            if award is not None:
+                actor.awards.append(award)
+
+        for item in args['in_family_relations']:
+            actor = Actor.query.get(item)
+            if actor is not None:
+                actor.in_family_relation.append(actor)
+        db.session.commit()
+        return {"message":  "data updated" }
+
 
     def delete(self, id):
-        task = [task for task in tasks if task['id'] == id]
-        if len(task) == 0:
-            abort(404)
-        tasks.remove(task[0])
-        return {'result': True}
+        actor = Actor.query.get(id)
+        db.session.delete(actor)
+        db.session.commit()
+        return {'message': 'data deleted'}
 
 
+api.add_resource(ActorsListCreateAPI, '/movie_recommend/api/v1/actors', endpoint='actors')
+api.add_resource(ActorsAPI, '/movie_recommend/api/v1/actors/<int:id>', endpoint='actors_settings')
 
 ############### Genre API resource ##################
 
