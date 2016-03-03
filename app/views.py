@@ -4,8 +4,8 @@ from app import marshal
 from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
-from .models import User, UserPreferences, FilmIndustry, Genre, Movie, Actor
-from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema
+from .models import User, UserPreferences, FilmIndustry, Genre, Movie, TVSeries, Video ,Actor
+from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema, TVSeriesSchema,VideoSchema
 
 # # refer microblog app by miguelgrinberg to make models and views flask, just take care this
 # # time we are building the API server not just a basic site and take care to use only class based
@@ -295,9 +295,9 @@ class MovieAPI(Resource):
 
     def get(self, id):
         movie = Movie.query.get(id)
-        movie_schema = MovieSchema(many=True)
+        movie_schema = MovieSchema()
         result = movie_schema.dump(movie)
-        return {"movies_list": result.data}
+        return {"movie_details": result.data}
 
     def put(self, id):
         args = self.reqparse.parse_args()
@@ -323,132 +323,163 @@ api.add_resource(MovieListCreateAPI, '/movie_recommend/api/v1/movies', endpoint=
 api.add_resource(MovieAPI, '/movie_recommend/api/v1/movies/<int:id>', endpoint='movies_settings')
 
 
-# ############### TvSeries API resource ##################
-#
-# class TVSeriesListCreateAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, required=True,
-#                                    help='No task title provided',
-#                                    location='json')
-#         self.reqparse.add_argument('description', type=str, default="",
-#                                    location='json')
-#         super(TaskListAPI, self).__init__()
-#
-#     def get(self):
-#         return {'tasks': [marshal(task, task_fields) for task in tasks]}
-#
-#     def post(self):
-#         args = self.reqparse.parse_args()
-#         task = {
-#             'id': tasks[-1]['id'] + 1,
-#             'title': args['title'],
-#             'description': args['description'],
-#             'done': False
-#         }
-#         tasks.append(task)
-#         return {'task': marshal(task, task_fields)}, 201
-#
-#
-# class TVSeriesAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, location='json')
-#         self.reqparse.add_argument('description', type=str, location='json')
-#         self.reqparse.add_argument('done', type=bool, location='json')
-#         super(TaskAPI, self).__init__()
-#
-#     def get(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         return {'task': marshal(task[0], task_fields)}
-#
-#     def put(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         task = task[0]
-#         args = self.reqparse.parse_args()
-#         for k, v in args.items():
-#             if v is not None:
-#                 task[k] = v
-#         return {'task': marshal(task, task_fields)}
-#
-#     def delete(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         tasks.remove(task[0])
-#         return {'result': True}
-#
-# ############### Video API resource ##################
-#
-# class VideoListCreateAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, required=True,
-#                                    help='No task title provided',
-#                                    location='json')
-#         self.reqparse.add_argument('description', type=str, default="",
-#                                    location='json')
-#         super(TaskListAPI, self).__init__()
-#
-#     def get(self):
-#         return {'tasks': [marshal(task, task_fields) for task in tasks]}
-#
-#     def post(self):
-#         args = self.reqparse.parse_args()
-#         task = {
-#             'id': tasks[-1]['id'] + 1,
-#             'title': args['title'],
-#             'description': args['description'],
-#             'done': False
-#         }
-#         tasks.append(task)
-#         return {'task': marshal(task, task_fields)}, 201
-#
-#
-# class VideoAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, location='json')
-#         self.reqparse.add_argument('description', type=str, location='json')
-#         self.reqparse.add_argument('done', type=bool, location='json')
-#         super(TaskAPI, self).__init__()
-#
-#     def get(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         return {'task': marshal(task[0], task_fields)}
-#
-#     def put(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         task = task[0]
-#         args = self.reqparse.parse_args()
-#         for k, v in args.items():
-#             if v is not None:
-#                 task[k] = v
-#         return {'task': marshal(task, task_fields)}
-#
-#     def delete(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         tasks.remove(task[0])
-#         return {'result': True}
-#
+############### TvSeries API resource ##################
+
+class TVSeriesListCreateAPI(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('film_industry_id', type=int, required=True,
+                                   help='No film industry provided',
+                                   location='json')
+        self.reqparse.add_argument('name', type=str,
+                                   location='json')
+        self.reqparse.add_argument('genre_id', type=int,
+                                   location='json')
+        self.reqparse.add_argument('actor', type=list, default=[],
+                                   location='json')
+        super(TVSeriesListCreateAPI, self).__init__()
+
+    def get(self):
+        tvseries = TVSeries.query.all()
+        tvseries_schema = TVSeriesSchema(many=True)
+        result = tvseries_schema.dump(tvseries)
+        return {"tvseries_list": result.data}
+
+    def post(self):
+        args = self.reqparse.parse_args()
+        # read this for foreign key  and many to many: http://flask-sqlalchemy.pocoo.org/2.1/quickstart/
+        # http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#building-a-many-to-many-relationship
+        film_industry = FilmIndustry.query.get(args['film_industry_id'])
+        genre = Genre.query.get(args['genre_id'])
+        tvseries = TVSeries(film_industry.id, str(args['name']), genre.id)
+        for item in args['actor']:
+            actor = Actor.query.get(item)
+            if actor is not None:
+                tvseries.actor.append(actor)
+        db.session.add(tvseries)
+        db.session.commit()
+        tvseries_schema = TVSeriesSchema()
+        result = tvseries_schema.dump(tvseries)
+
+        return {"data": result.data ,"message":  "data inserted" }, 201
+
+
+
+class TVSeriesAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('film_industry_id', type=int, location='json')
+        self.reqparse.add_argument('name', type=str, location='json')
+        self.reqparse.add_argument('genre_id', type=int, location='json')
+        self.reqparse.add_argument('actor', type=list, location='json')
+        super(TVSeriesAPI, self).__init__()
+
+    def get(self, id):
+        tvseries = TVSeries.query.get(id)
+        tvseries_schema = TVSeriesSchema()
+        result = tvseries_schema.dump(tvseries)
+        return {"tvseries_details": result.data}
+
+    def put(self, id):
+        args = self.reqparse.parse_args()
+        tvseries = TVSeries.query.get(id)
+        tvseries.film_industry_id = (FilmIndustry.query.get(args['film_industry_id'])).id
+        tvseries.name = args['name']
+        tvseries.genre_id = (Genre.query.get(args['genre_id'])).id
+        for item in args['actor']:
+            actor = Actor.query.get(item)
+            if actor is not None:
+                tvseries.actor.append(actor)
+        db.session.commit()
+        return {'message': 'data updated'}
+
+    def delete(self, id):
+        tvseries = TVSeries.query.get(id)
+        db.session.delete(tvseries)
+        db.session.commit()
+        return {'message': 'data deleted'}
+
+############### Video API resource ##################
+
+class VideoListCreateAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('film_industry_id', type=int, required=True,
+                                   help='No film industry provided',
+                                   location='json')
+        self.reqparse.add_argument('name', type=str,
+                                   location='json')
+        self.reqparse.add_argument('genre_id', type=int,
+                                   location='json')
+        self.reqparse.add_argument('actor', type=list, default=[],
+                                   location='json')
+        super(VideoListCreateAPI, self).__init__()
+
+    def get(self):
+        videos = Video.query.all()
+        videos_schema = VideoSchema(many=True)
+        result = videos_schema.dump(videos)
+        return {"videos_list": result.data}
+
+    def post(self):
+        args = self.reqparse.parse_args()
+        # read this for foreign key  and many to many: http://flask-sqlalchemy.pocoo.org/2.1/quickstart/
+        # http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#building-a-many-to-many-relationship
+        film_industry = FilmIndustry.query.get(args['film_industry_id'])
+        genre = Genre.query.get(args['genre_id'])
+        video = Video(film_industry.id, str(args['name']), genre.id)
+        for item in args['actor']:
+            actor = Actor.query.get(item)
+            if actor is not None:
+                video.actor.append(actor)
+        db.session.add(video)
+        db.session.commit()
+        video_schema = VideoSchema()
+        result = video_schema.dump(video)
+
+        return {"data": result.data ,"message":  "data inserted" }, 201
+
+
+class VideoAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('film_industry_id', type=int, location='json')
+        self.reqparse.add_argument('name', type=str, location='json')
+        self.reqparse.add_argument('genre_id', type=int, location='json')
+        self.reqparse.add_argument('actor', type=list, location='json')
+        super(VideoAPI, self).__init__()
+
+    def get(self, id):
+        video = Video.query.get(id)
+        video_schema = VideoSchema()
+        result = video_schema.dump(video)
+        return {"video_details": result.data}
+
+    def put(self, id):
+        args = self.reqparse.parse_args()
+        video = Video.query.get(id)
+        video.film_industry_id = (FilmIndustry.query.get(args['film_industry_id'])).id
+        video.name = args['name']
+        video.genre_id = (Genre.query.get(args['genre_id'])).id
+        for item in args['actor']:
+            actor = Actor.query.get(item)
+            if actor is not None:
+                video.actor.append(actor)
+        db.session.commit()
+        return {'message': 'data updated'}
+
+    def delete(self, id):
+        video = Video.query.get(id)
+        db.session.delete(video)
+        db.session.commit()
+        return {'message': 'data deleted'}
+
 # ############### Awards API resource ##################
 #
 # class AwardsListCreateAPI(Resource):
@@ -619,9 +650,9 @@ class GenreAPI(Resource):
 
     def get(self, id):
         genre = Genre.query.get(id)
-        genre_schema = GenreSchema(many=True)
+        genre_schema = GenreSchema()
         result = genre_schema.dump(genre)
-        return {"genre_list": result.data}
+        return {"genre_details": result.data}
 
     def put(self, id):
         args = self.reqparse.parse_args()
