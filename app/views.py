@@ -269,11 +269,11 @@ class MovieListCreateAPI(Resource):
         # http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#building-a-many-to-many-relationship
         film_industry = FilmIndustry.query.get(args['film_industry_id'])
         genre = Genre.query.get(args['genre_id'])
-        movie = Movie(film_industry, args['name'], genre)
+        movie = Movie(film_industry.id, str(args['name']), genre.id)
         for item in args['actor']:
             actor = Actor.query.get(item)
             if actor is not None:
-                movie.actor.append()
+                movie.actor.append(actor)
         db.session.add(movie)
         db.session.commit()
         movie_schema = MovieSchema()
@@ -290,7 +290,7 @@ class MovieAPI(Resource):
         self.reqparse.add_argument('film_industry_id', type=int, location='json')
         self.reqparse.add_argument('name', type=str, location='json')
         self.reqparse.add_argument('genre_id', type=int, location='json')
-        self.reqparse.add_argument('actor', type=str, location='json')
+        self.reqparse.add_argument('actor', type=list, location='json')
         super(MovieAPI, self).__init__()
 
     def get(self, id):
@@ -300,22 +300,23 @@ class MovieAPI(Resource):
         return {"movies_list": result.data}
 
     def put(self, id):
-        task = [task for task in tasks if task['id'] == id]
-        if len(task) == 0:
-            abort(404)
-        task = task[0]
         args = self.reqparse.parse_args()
-        for k, v in args.items():
-            if v is not None:
-                task[k] = v
-        return {'task': marshal(task, task_fields)}
+        movie = Movie.query.get(id)
+        movie.film_industry_id = (FilmIndustry.query.get(args['film_industry_id'])).id
+        movie.name = args['name']
+        movie.genre_id = (Genre.query.get(args['genre_id'])).id
+        for item in args['actor']:
+            actor = Actor.query.get(item)
+            if actor is not None:
+                movie.actor.append(actor)
+        db.session.commit()
+        return {'message': 'data updated'}
 
     def delete(self, id):
-        task = [task for task in tasks if task['id'] == id]
-        if len(task) == 0:
-            abort(404)
-        tasks.remove(task[0])
-        return {'result': True}
+        movie = Movie.query.get(id)
+        db.session.delete(movie)
+        db.session.commit()
+        return {'message': 'data deleted'}
 
 
 api.add_resource(MovieListCreateAPI, '/movie_recommend/api/v1/movies', endpoint='movies')
