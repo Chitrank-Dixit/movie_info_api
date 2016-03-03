@@ -101,6 +101,7 @@ class User(db.Model):
 class UserPreferences(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship('User', backref='user_preferences')
     film_industry = db.relationship('FilmIndustry',
         secondary = user_film_industry,
         # primaryjoin = (tv_series_actors.c.actor_id == id),
