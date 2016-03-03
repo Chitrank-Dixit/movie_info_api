@@ -5,7 +5,7 @@ from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
 from .models import User, UserPreferences, FilmIndustry, Genre, Movie, TVSeries, Video , Award ,Actor
-from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema, TVSeriesSchema,VideoSchema, AwardsSchema
+from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema, TVSeriesSchema,VideoSchema, AwardsSchema, ActorSchema
 
 # # refer microblog app by miguelgrinberg to make models and views flask, just take care this
 # # time we are building the API server not just a basic site and take care to use only class based
@@ -560,71 +560,113 @@ class AwardsAPI(Resource):
 api.add_resource(AwardsListCreateAPI, '/movie_recommend/api/v1/awards', endpoint='awards')
 api.add_resource(AwardsAPI, '/movie_recommend/api/v1/awards/<int:id>', endpoint='awards_settings')
 
-# ############### Actors API resource ##################
-#
-# class ActorsListCreateAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, required=True,
-#                                    help='No task title provided',
-#                                    location='json')
-#         self.reqparse.add_argument('description', type=str, default="",
-#                                    location='json')
-#         super(TaskListAPI, self).__init__()
-#
-#     def get(self):
-#         return {'tasks': [marshal(task, task_fields) for task in tasks]}
-#
-#     def post(self):
-#         args = self.reqparse.parse_args()
-#         task = {
-#             'id': tasks[-1]['id'] + 1,
-#             'title': args['title'],
-#             'description': args['description'],
-#             'done': False
-#         }
-#         tasks.append(task)
-#         return {'task': marshal(task, task_fields)}, 201
-#
-#
-#
-# class ActorsAPI(Resource):
-#     decorators = [auth.login_required]
-#
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('title', type=str, location='json')
-#         self.reqparse.add_argument('description', type=str, location='json')
-#         self.reqparse.add_argument('done', type=bool, location='json')
-#         super(TaskAPI, self).__init__()
-#
-#     def get(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         return {'task': marshal(task[0], task_fields)}
-#
-#     def put(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         task = task[0]
-#         args = self.reqparse.parse_args()
-#         for k, v in args.items():
-#             if v is not None:
-#                 task[k] = v
-#         return {'task': marshal(task, task_fields)}
-#
-#     def delete(self, id):
-#         task = [task for task in tasks if task['id'] == id]
-#         if len(task) == 0:
-#             abort(404)
-#         tasks.remove(task[0])
-#         return {'result': True}
-#
-#
+############### Actors API resource ##################
+
+class ActorsListCreateAPI(Resource):
+    #decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('name', type=str, required=True,
+                                   help='No name provided',
+                                   location='json')
+        self.reqparse.add_argument('gender', type=str, default="",
+                                   location='json')
+        self.reqparse.add_argument('age', type=str, default="",
+                                   location='json')
+        self.reqparse.add_argument('date_of_birth', type=str, default="",
+                                   location='json')
+        self.reqparse.add_argument('movies', type=list, default=[],
+                                   location='json')
+        self.reqparse.add_argument('tv_series', type=list, default=[],
+                                   location='json')
+        self.reqparse.add_argument('videos', type=list, default=[],
+                                   location='json')
+        self.reqparse.add_argument('awards', type=list, default=[],
+                                   location='json')
+        self.reqparse.add_argument('in_family_relations', type=[], default=[],
+                                   location='json')
+        super(ActorsListCreateAPI, self).__init__()
+
+    def get(self):
+        actors = Actor.query.all()
+        actors_schema = ActorSchema(many=True)
+        result = actors_schema.dump(actors)
+        return {"awards_list": result.data}
+
+    def post(self):
+        args = self.reqparse.parse_args()
+        actor = Actor(str(args['name']), str(args['gender']), str(args['gender']), str(args['age']), str(args['date_of_birth']))
+
+        for item in args['movies']:
+            movie = Movie.query.get(item)
+            if movie is not None:
+                actor.movies.append(movie)
+
+        for item in args['tc_series']:
+            tv_series = TVSeries.query.get(item)
+            if tv_series is not None:
+                actor.tv_series.append(tv_series)
+
+        for item in args['videos']:
+            video = Video.query.get(item)
+            if video is not None:
+                actor.videos.append(video)
+
+        for item in args['awards']:
+            award = Award.query.get(item)
+            if award is not None:
+                actor.awards.append(award)
+
+        for item in args['in_family_relations']:
+            actor = Actor.query.get(item)
+            if actor is not None:
+                actor.in_family_relation.append(actor)
+
+        db.session.add(actor)
+        db.session.commit()
+        actor_schema = ActorSchema()
+        result = actor_schema.dump(actor)
+
+        return {"data": result.data ,"message":  "data inserted" }, 201
+
+
+
+class ActorsAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('title', type=str, location='json')
+        self.reqparse.add_argument('description', type=str, location='json')
+        self.reqparse.add_argument('done', type=bool, location='json')
+        super(ActorsAPI, self).__init__()
+
+    def get(self, id):
+        task = [task for task in tasks if task['id'] == id]
+        if len(task) == 0:
+            abort(404)
+        return {'task': marshal(task[0], task_fields)}
+
+    def put(self, id):
+        task = [task for task in tasks if task['id'] == id]
+        if len(task) == 0:
+            abort(404)
+        task = task[0]
+        args = self.reqparse.parse_args()
+        for k, v in args.items():
+            if v is not None:
+                task[k] = v
+        return {'task': marshal(task, task_fields)}
+
+    def delete(self, id):
+        task = [task for task in tasks if task['id'] == id]
+        if len(task) == 0:
+            abort(404)
+        tasks.remove(task[0])
+        return {'result': True}
+
+
 
 ############### Genre API resource ##################
 

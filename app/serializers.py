@@ -36,7 +36,7 @@ class ActorSchema(ma.Schema):
 class MovieSchema(ma.Schema):
     class Meta:
         model = Movie
-        fields = ('film_industry', 'name', 'genre', 'actor')
+        fields = ('id','film_industry', 'name', 'genre', 'actor')
 
     film_industry = ma.Nested(FilmIndustrySchema)
     genre = ma.Nested(GenreSchema)
@@ -46,7 +46,7 @@ class MovieSchema(ma.Schema):
 class VideoSchema(ma.Schema):
     class Meta:
         model = Video
-        fields = ('film_industry', 'name', 'genre', 'actor')
+        fields = ('id','film_industry', 'name', 'genre', 'actor')
 
     film_industry = ma.Nested(FilmIndustrySchema)
     genre = ma.Nested(GenreSchema)
@@ -56,7 +56,7 @@ class VideoSchema(ma.Schema):
 class TVSeriesSchema(ma.Schema):
     class Meta:
         model = TVSeries
-        fields = ('film_industry', 'name', 'genre', 'actor')
+        fields = ('id','film_industry', 'name', 'genre', 'actor')
 
     film_industry = ma.Nested(FilmIndustrySchema)
     genre = ma.Nested(GenreSchema)
