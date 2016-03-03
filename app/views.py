@@ -401,10 +401,14 @@ class TVSeriesAPI(Resource):
         db.session.commit()
         return {'message': 'data deleted'}
 
+
+api.add_resource(TVSeriesListCreateAPI, '/movie_recommend/api/v1/tv_series', endpoint='tv_series')
+api.add_resource(TVSeriesAPI, '/movie_recommend/api/v1/tv_series/<int:id>', endpoint='tv_series_settings')
+
 ############### Video API resource ##################
 
 class VideoListCreateAPI(Resource):
-    decorators = [auth.login_required]
+    # decorators = [auth.login_required]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -445,7 +449,7 @@ class VideoListCreateAPI(Resource):
 
 
 class VideoAPI(Resource):
-    decorators = [auth.login_required]
+    #decorators = [auth.login_required]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -480,10 +484,13 @@ class VideoAPI(Resource):
         db.session.commit()
         return {'message': 'data deleted'}
 
+api.add_resource(VideoListCreateAPI, '/movie_recommend/api/v1/videos', endpoint='videos')
+api.add_resource(VideoAPI, '/movie_recommend/api/v1/videos/<int:id>', endpoint='videos_settings')
+
 ############### Awards API resource ##################
 
 class AwardsListCreateAPI(Resource):
-    decorators = [auth.login_required]
+    #decorators = [auth.login_required]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -518,7 +525,7 @@ class AwardsListCreateAPI(Resource):
 
 
 class AwardsAPI(Resource):
-    decorators = [auth.login_required]
+    #decorators = [auth.login_required]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -549,6 +556,9 @@ class AwardsAPI(Resource):
         db.session.commit()
         return {'message': 'data deleted'}
 
+
+api.add_resource(AwardsListCreateAPI, '/movie_recommend/api/v1/awards', endpoint='awards')
+api.add_resource(AwardsAPI, '/movie_recommend/api/v1/awards/<int:id>', endpoint='awards_settings')
 
 # ############### Actors API resource ##################
 #

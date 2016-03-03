@@ -24,13 +24,13 @@ class GenreSchema(ma.Schema):
 class FilmIndustrySchema(ma.Schema):
     class Meta:
         model = FilmIndustry
-        fields = ('name', 'location')
+        fields = ('id','name', 'location')
 
 
 class ActorSchema(ma.Schema):
     class Meta:
         model = Actor
-        fields = ('name', 'gender', 'age')
+        fields = ('id','name', 'gender', 'age','date_of_birth')
 
 
 class MovieSchema(ma.Schema):

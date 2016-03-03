@@ -189,10 +189,10 @@ class FilmIndustry(db.Model):
 class TVSeries(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     film_industry_id = db.Column(db.Integer, db.ForeignKey('film_industry.id'))
-    film_industry = db.relationship('FilmIndustry', backref='movies')
+    film_industry = db.relationship('FilmIndustry', backref='tv_series')
     name = db.Column(db.String(80))
     genre_id = db.Column(db.Integer, db.ForeignKey('genre.id'))
-    genre = db.relationship('Genre', backref='movies')
+    genre = db.relationship('Genre', backref='tv_series')
     actor = db.relationship('Actor',
         secondary = tv_series_actors,
         # primaryjoin = (tv_series_actors.c.actor_id == id),
@@ -207,10 +207,10 @@ class TVSeries(db.Model):
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     film_industry_id = db.Column(db.Integer, db.ForeignKey('film_industry.id'))
-    film_industry = db.relationship('FilmIndustry', backref='movies')
+    film_industry = db.relationship('FilmIndustry', backref='videos')
     name = db.Column(db.String(80))
     genre_id = db.Column(db.Integer, db.ForeignKey('genre.id'))
-    genre = db.relationship('Genre', backref='movies')
+    genre = db.relationship('Genre', backref='videos')
     actor = db.relationship('Actor',
         secondary = video_actors,
         # primaryjoin = (tv_series_actors.c.actor_id == id),
