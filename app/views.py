@@ -6,7 +6,7 @@ from flask.ext.login import login_user, logout_user, current_user, login_require
 from flask_restful import reqparse, Resource
 from .models import User, UserPreferences, FilmIndustry, Genre, Movie, TVSeries, Video , Award ,Actor
 from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema, TVSeriesSchema,VideoSchema, AwardsSchema, ActorSchema
-
+import datetime
 # # refer microblog app by miguelgrinberg to make models and views flask, just take care this
 # # time we are building the API server not just a basic site and take care to use only class based
 # # views only
@@ -592,36 +592,52 @@ class ActorsListCreateAPI(Resource):
         actors = Actor.query.all()
         actors_schema = ActorSchema(many=True)
         result = actors_schema.dump(actors)
-        return {"awards_list": result.data}
+        return {"actors_list": result.data}
 
     def post(self):
         args = self.reqparse.parse_args()
-        actor = Actor(str(args['name']), str(args['gender']), str(args['gender']), str(args['age']), str(args['date_of_birth']))
+        date_of_birth = datetime.datetime.strptime(str(args['date_of_birth']),"%Y-%m-%d").date()
+        actor = Actor(str(args['name']), str(args['gender']), str(args['age']), date_of_birth)
 
         for item in args['movies']:
-            movie = Movie.query.get(item)
-            if movie is not None:
-                actor.movies.append(movie)
+            try:
+                movie = Movie.query.get(item)
+                if movie is not None:
+                    actor.movies.append(movie)
+            except Exception,e:
+                pass
 
-        for item in args['tc_series']:
-            tv_series = TVSeries.query.get(item)
-            if tv_series is not None:
-                actor.tv_series.append(tv_series)
+        for item in args['tv_series']:
+            try:
+                tv_series = TVSeries.query.get(item)
+                if tv_series is not None:
+                    actor.tv_series.append(tv_series)
+            except Exception, e:
+                pass
 
         for item in args['videos']:
-            video = Video.query.get(item)
-            if video is not None:
-                actor.videos.append(video)
+            try:
+                video = Video.query.get(item)
+                if video is not None:
+                    actor.videos.append(video)
+            except Exception,e:
+                pass
 
         for item in args['awards']:
-            award = Award.query.get(item)
-            if award is not None:
-                actor.awards.append(award)
+            try:
+                award = Award.query.get(item)
+                if award is not None:
+                    actor.awards.append(award)
+            except Exception,e:
+                pass
 
         for item in args['in_family_relations']:
-            actor = Actor.query.get(item)
-            if actor is not None:
-                actor.in_family_relation.append(actor)
+            try:
+                in_family = Actor.query.get(item)
+                if in_family is not None:
+                    actor.in_family_relation.append(in_family)
+            except Exception,e:
+                pass
 
         db.session.add(actor)
         db.session.commit()
@@ -633,7 +649,7 @@ class ActorsListCreateAPI(Resource):
 
 
 class ActorsAPI(Resource):
-    decorators = [auth.login_required]
+    #decorators = [auth.login_required]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -645,6 +661,7 @@ class ActorsAPI(Resource):
         self.reqparse.add_argument('tv_series', type=list, location='json')
         self.reqparse.add_argument('videos', type=list, location='json')
         self.reqparse.add_argument('awards', type=list, location='json')
+        self.reqparse.add_argument('in_family_relations', type=list, location='json')
 
 
         super(ActorsAPI, self).__init__()
@@ -653,7 +670,7 @@ class ActorsAPI(Resource):
         actor = Actor.query.get(id)
         actor_schema = ActorSchema()
         result = actor_schema.dump(actor)
-        return {"awards_list": result.data}
+        return {"actor_details": result.data}
 
     def put(self, id):
         args = self.reqparse.parse_args()
@@ -661,14 +678,14 @@ class ActorsAPI(Resource):
         actor.name = str(args['name'])
         actor.gender = str(args['gender'])
         actor.age = str(args['age'])
-        actor.date_of_birth = str(args['date_of_birth'])
+        actor.date_of_birth = datetime.datetime.strptime(str(args['date_of_birth']),"%Y-%m-%d").date()
 
         for item in args['movies']:
             movie = Movie.query.get(item)
             if movie is not None:
                 actor.movies.append(movie)
 
-        for item in args['tc_series']:
+        for item in args['tv_series']:
             tv_series = TVSeries.query.get(item)
             if tv_series is not None:
                 actor.tv_series.append(tv_series)
@@ -684,9 +701,9 @@ class ActorsAPI(Resource):
                 actor.awards.append(award)
 
         for item in args['in_family_relations']:
-            actor = Actor.query.get(item)
-            if actor is not None:
-                actor.in_family_relation.append(actor)
+            in_relation = Actor.query.get(item)
+            if in_relation is not None:
+                actor.in_family_relation.append(in_relation)
         db.session.commit()
         return {"message":  "data updated" }
 

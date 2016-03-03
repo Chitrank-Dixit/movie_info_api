@@ -145,12 +145,11 @@ class UserPreferences(db.Model):
         )
 
 
-    def __init__(self, username, email):
-        self.username = username
-        self.email = email
+    def __init__(self, user_id):
+        self.user_id = user_id
 
-    def __repr__(self):
-        return '<User %r>' % self.username
+
+
 
 
 ################ relationship table (many to many relationships) ###############
@@ -180,6 +179,9 @@ class FilmIndustry(db.Model):
     name = db.Column(db.String(80))
     location = db.Column(db.String(80))
 
+    def __init__(self,name, location):
+        self.name = name
+        self.location = location
 
     def __str__(self):
         pass
@@ -201,6 +203,11 @@ class TVSeries(db.Model):
         # lazy = 'dynamic'
         )
 
+    def __init__(self, film_industry_id, name, genre_id):
+        self.film_industry_id = film_industry_id
+        self.name = name
+        self.genre_id = genre_id
+
     def __str__(self):
         pass
 
@@ -219,6 +226,10 @@ class Video(db.Model):
         # lazy = 'dynamic'
         )
 
+    def __init__(self, film_industry_id, name, genre_id):
+        self.film_industry_id = film_industry_id
+        self.name = name
+        self.genre_id = genre_id
 
     def __str__(self):
         pass
@@ -252,6 +263,8 @@ class Genre(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True)
 
+    def __init__(self,name):
+        self.name = name
 
     def __str__(self):
         pass
@@ -279,6 +292,9 @@ class Award(db.Model):
         backref = db.backref('Award', lazy = 'dynamic'),
         # lazy = 'dynamic'
         )
+
+    def __init__(self,name):
+        self.name = name
 
     def __str__(self):
         pass
@@ -360,6 +376,11 @@ class Actor(db.Model):
         # lazy = 'dynamic'
         )
 
+    def __init__(self,name, gender, age, date_of_birth):
+        self.name = name
+        self.gender = gender
+        self.age = age
+        self.date_of_birth = date_of_birth
 
     def __str__(self):
         pass
