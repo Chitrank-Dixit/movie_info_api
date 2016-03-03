@@ -283,7 +283,7 @@ class MovieListCreateAPI(Resource):
 
 
 class MovieAPI(Resource):
-    decorators = [auth.login_required]
+    #decorators = [auth.login_required]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -320,7 +320,7 @@ class MovieAPI(Resource):
 
 
 api.add_resource(MovieListCreateAPI, '/movie_recommend/api/v1/movies', endpoint='movies')
-
+api.add_resource(MovieAPI, '/movie_recommend/api/v1/movies/<int:id>', endpoint='movies_settings')
 
 
 # ############### TvSeries API resource ##################
