@@ -30,31 +30,31 @@ class ActorSchema(ma.Schema):
 class MovieSchema(ma.Schema):
     class Meta:
         model = Movie
-        fields = ('id','film_industry', 'name', 'genre', 'actor')
+        fields = ('id', 'film_industry', 'name', 'genre', 'actor')
 
     film_industry = ma.Nested(FilmIndustrySchema)
     genre = ma.Nested(GenreSchema)
-    actor = ma.Nested(ActorSchema)
+    actor = ma.Nested(ActorSchema, many=True)
 
 
 class VideoSchema(ma.Schema):
     class Meta:
         model = Video
-        fields = ('id','film_industry', 'name', 'genre', 'actor')
+        fields = ('id', 'film_industry', 'name', 'genre', 'actor')
 
     film_industry = ma.Nested(FilmIndustrySchema)
     genre = ma.Nested(GenreSchema)
-    actor = ma.Nested(ActorSchema)
+    actor = ma.Nested(ActorSchema, many=True)
 
 
 class TVSeriesSchema(ma.Schema):
     class Meta:
         model = TVSeries
-        fields = ('id','film_industry', 'name', 'genre', 'actor')
+        fields = ('id', 'film_industry', 'name', 'genre', 'actor')
 
     film_industry = ma.Nested(FilmIndustrySchema)
     genre = ma.Nested(GenreSchema)
-    actor = ma.Nested(ActorSchema)
+    actor = ma.Nested(ActorSchema, many=True)
 
 
 class AwardsSchema(ma.Schema):
@@ -68,11 +68,11 @@ class AwardsSchema(ma.Schema):
 class UserPreferencesSchema(ma.Schema):
     class Meta:
         model = UserPreferences
-        fields = ('id', 'user' , 'film_industry' , 'favourite_actor','favourite_movies','favourite_tv_series','favourite_videos')
+        fields = ('id', 'user', 'film_industry','favourite_actor','favourite_movies','favourite_tv_series','favourite_videos' )
 
     user = ma.Nested(UserSchema)
-    film_industry = ma.Nested(FilmIndustrySchema)
-    favourite_actor = ma.Nested(ActorSchema)
-    favourite_movies = ma.Nested(MovieSchema)
-    favourite_tv_series = ma.Nested(TVSeriesSchema)
-    favourite_videos = ma.Nested(VideoSchema)
+    film_industry = ma.Nested(FilmIndustrySchema, many=True)
+    favourite_actor = ma.Nested(ActorSchema, many=True)
+    favourite_movies = ma.Nested(MovieSchema, many=True)
+    favourite_tv_series = ma.Nested(TVSeriesSchema, many=True)
+    favourite_videos = ma.Nested(VideoSchema, many=True)

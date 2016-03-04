@@ -138,7 +138,6 @@ class UserPreferencesListCreateAPI(Resource):
             except Exception,e:
                 db.session.rollback()
 
-
         for item in args['favourite_actor']:
             try:
                 actor = Actor.query.get(item)
