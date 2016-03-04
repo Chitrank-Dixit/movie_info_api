@@ -6,28 +6,28 @@ from sqlalchemy.orm import validates
 ################ relationship table (many to many relationships) ###############
 
 user_film_industry = db.Table('user_film_industry',
-    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
-    db.Column('film_industry_id', db.Integer, db.ForeignKey('film_industry.id'))
+    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id'), nullable=True),
+    db.Column('film_industry_id', db.Integer, db.ForeignKey('film_industry.id'), nullable=True)
 )
 
 user_favourite_actor = db.Table('user_favourite_actor',
-    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
-    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'))
+    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id'), nullable=True),
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'), nullable=True)
 )
 
 user_favourite_movies = db.Table('user_favourite_movies',
-    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
-    db.Column('movie_id', db.Integer, db.ForeignKey('movie.id'))
+    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id'), nullable=True),
+    db.Column('movie_id', db.Integer, db.ForeignKey('movie.id') , nullable=True)
 )
 
 user_favourite_tv_series = db.Table('user_favourite_tv_series',
-    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
-    db.Column('tv_series_id', db.Integer, db.ForeignKey('tv_series.id'))
+    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id'), nullable=True),
+    db.Column('tv_series_id', db.Integer, db.ForeignKey('tv_series.id'), nullable=True)
 )
 
 user_favourite_videos = db.Table('user_favourite_videos',
-    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id')),
-    db.Column('video_id', db.Integer, db.ForeignKey('video.id'))
+    db.Column('user_preferences_id', db.Integer, db.ForeignKey('user_preferences.id'), nullable=True),
+    db.Column('video_id', db.Integer, db.ForeignKey('video.id'), nullable=True)
 )
 
 ################ User and User Preference related data ############
@@ -144,14 +144,14 @@ class UserPreferences(db.Model):
 ################ relationship table (many to many relationships) ###############
 
 tv_series_actors = db.Table('tv_series_actors',
-    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
-    db.Column('tv_series_id', db.Integer, db.ForeignKey('tv_series.id'))
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'), nullable=True),
+    db.Column('tv_series_id', db.Integer, db.ForeignKey('tv_series.id'), nullable=True)
 )
 
 
 video_actors = db.Table('videos_actors',
-    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
-    db.Column('video_id', db.Integer, db.ForeignKey('video.id'))
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'), nullable=True),
+    db.Column('video_id', db.Integer, db.ForeignKey('video.id'), nullable=True)
 )
 
 
@@ -262,8 +262,8 @@ class Genre(db.Model):
 ################ relationship table (many to many relationships) ###############
 
 awarded_actors = db.Table('awarded_actors',
-    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
-    db.Column('award_id', db.Integer, db.ForeignKey('award.id')),
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'),nullable=True),
+    db.Column('award_id', db.Integer, db.ForeignKey('award.id'), nullable=True),
 
 )
 
@@ -292,32 +292,32 @@ class Award(db.Model):
 ################ relationship table (many to many relationships) ###############
 
 actor_movies = db.Table('actor_movies',
-    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
-    db.Column('movie_id', db.Integer, db.ForeignKey('movie.id')),
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'), nullable=True),
+    db.Column('movie_id', db.Integer, db.ForeignKey('movie.id'), nullable=True),
 
 )
 
 actor_videos = db.Table('actor_video',
-    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
-    db.Column('video_id', db.Integer, db.ForeignKey('video.id')),
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'), nullable=True),
+    db.Column('video_id', db.Integer, db.ForeignKey('video.id'), nullable=True),
 
 )
 
 actor_tvseries = db.Table('actor_tvseries',
-    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
-    db.Column('tv_series_id', db.Integer, db.ForeignKey('tv_series.id')),
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'), nullable=True),
+    db.Column('tv_series_id', db.Integer, db.ForeignKey('tv_series.id'), nullable=True),
 
 )
 
 actor_awards = db.Table('actor_awards',
-    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
-    db.Column('award_id', db.Integer, db.ForeignKey('award.id')),
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'), nullable=True),
+    db.Column('award_id', db.Integer, db.ForeignKey('award.id'), nullable=True),
 
 )
 
 actor_relationship = db.Table('actor_relationship',
-    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
-    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id')),
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'), nullable=True),
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'), nullable=True),
 
 )
 
