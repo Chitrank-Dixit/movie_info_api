@@ -14,6 +14,11 @@ from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from flask_oauthlib.provider import OAuth2Provider
 from flask_migrate import Migrate, MigrateCommand
+from flask_oauth import OAuth
+
+
+
+
 
 
 
@@ -27,8 +32,37 @@ admin = Admin(app, name='Movie Recommender', template_mode='bootstrap3')
 #admin.add_view(ModelView(Post, db.session))
 # oauth provider
 # done using : https://github.com/lepture/example-oauth2-server
+# read more to implement oauthlib from here: http://lepture.com/en/2013/create-oauth-server
 oauth = OAuth2Provider()
 oauth.init_app(app)
+
+# social oauth providers
+social_oauth = OAuth()
+
+
+# twitter
+twitter = social_oauth.remote_app('twitter',
+    base_url='https://api.twitter.com/1/',
+    request_token_url='https://api.twitter.com/oauth/request_token',
+    access_token_url='https://api.twitter.com/oauth/access_token',
+    authorize_url='https://api.twitter.com/oauth/authenticate',
+    consumer_key='<your key here>',
+    consumer_secret='<your secret here>'
+)
+
+
+# facebook
+
+facebook = social_oauth.remote_app('facebook',
+    base_url='https://graph.facebook.com/',
+    request_token_url=None,
+    access_token_url='/oauth/access_token',
+    authorize_url='https://www.facebook.com/dialog/oauth',
+    consumer_key="",
+    consumer_secret="",
+    request_token_params={'scope': 'email'}
+)
+
 api = Api(app)
 auth = HTTPBasicAuth()
 app.config.from_object('config')

@@ -1,9 +1,9 @@
 from flask import Flask, url_for, session, request, jsonify
 from flask_oauthlib.client import OAuth
 
-
-CLIENT_ID = 'ltVWH2RQIpozPyVNn3zYc0wVaeB1f2MbrlceiBQf'
-CLIENT_SECRET = 'hsiydM67P4g4K4vdx7wrBDiTP59r8OMwCzRNKrZjIxvneyGtQG'
+# need to change this frequently as per the current flow in the app
+CLIENT_ID = 'ctmXkC6CWMZjh259so0ZEovqjEGTq4fHJOCvxgb2'
+CLIENT_SECRET = 'EUt18ISsh5stUljSJgGUwtYv9tQR1cIQ8guPhPbO0LiUY03juS'
 
 
 app = Flask(__name__)
@@ -36,6 +36,7 @@ def index():
 
 @app.route('/authorized')
 def authorized():
+    import pdb;pdb.set_trace()
     resp = remote.authorized_response()
     if resp is None:
         return 'Access denied: reason=%s error=%s' % (
@@ -44,7 +45,7 @@ def authorized():
         )
     print(resp)
     session['remote_oauth'] = (resp['access_token'], '')
-    return jsonify(oauth_token=resp['access_token'])
+    return jsonify(access_token=resp['access_token'], refresh_token=resp['refresh_token'], token_type=resp['token_type'], scope=resp['scope'])
 
 
 @remote.tokengetter

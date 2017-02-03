@@ -1074,7 +1074,8 @@ def authorize(*args, **kwargs):
         client = Client.query.filter_by(client_id=client_id).first()
         kwargs['client'] = client
         kwargs['user'] = user
-        return render_template('authorize.html', **kwargs)
+        return jsonify(client_id=kwargs["client_id"], scope=kwargs["scopes"], response_type=kwargs["response_type"], redirect_uri=kwargs["redirect_uri"])
+        #return render_template('authorize.html', **kwargs)
 
     confirm = request.form.get('confirm', 'no')
     return confirm == 'yes'
