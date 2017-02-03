@@ -1,6 +1,6 @@
 __author__ = 'chitrankdixit'
 from app import db, ma
-from .models import User, UserPreferences, Genre, FilmIndustry, Movie, Video, TVSeries, Award ,Actor
+from .models import User, UserPreferences, Genre, FilmIndustry, Movie, Video, TVSeries, Award ,Actor, Application, Token
 
 
 class UserSchema(ma.Schema):
@@ -76,3 +76,14 @@ class UserPreferencesSchema(ma.Schema):
     favourite_movies = ma.Nested(MovieSchema, many=True)
     favourite_tv_series = ma.Nested(TVSeriesSchema, many=True)
     favourite_videos = ma.Nested(VideoSchema, many=True)
+
+
+class ApplicationSchema(ma.Schema):
+    class Meta:
+        model = Application
+        fields = ()
+
+class TokenSchema(ma.Schema):
+    class Meta:
+        model = Token
+        fields = ()

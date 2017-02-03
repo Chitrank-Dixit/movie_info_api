@@ -12,7 +12,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
-from flask_oauthlib.provider import OAuth2Provider
+from flask_oauthlib.provider import OAuth1Provider
 from flask_migrate import Migrate, MigrateCommand
 
 
@@ -25,10 +25,6 @@ from flask_migrate import Migrate, MigrateCommand
 app = Flask(__name__, static_url_path="")
 admin = Admin(app, name='Movie Recommender', template_mode='bootstrap3')
 #admin.add_view(ModelView(Post, db.session))
-# oauth provider
-# done using : https://github.com/lepture/example-oauth2-server
-oauth = OAuth2Provider()
-oauth.init_app(app)
 api = Api(app)
 auth = HTTPBasicAuth()
 app.config.from_object('config')
@@ -40,7 +36,8 @@ ma = Marshmallow(app)
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 
-
+# oauth provider
+oauth = OAuth1Provider()
 
 from app import views, models
 from app.models import User, UserPreferences, Movie, Video, TVSeries, FilmIndustry, Award, Actor, Genre, Application, Client, Grant, Token

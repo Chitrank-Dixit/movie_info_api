@@ -1,11 +1,15 @@
+from flask import session, request, redirect, render_template
 from flask.ext.restful import Resource
-from app import api, app, auth,db
+from app import api, app, auth,db, oauth
 from app import marshal
 from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
-from .models import User, UserPreferences, FilmIndustry, Genre, Movie, TVSeries, Video , Award ,Actor
-from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema, TVSeriesSchema,VideoSchema, AwardsSchema, ActorSchema
+from .models import User, UserPreferences, FilmIndustry, Genre, Movie, TVSeries, Video , Award ,Actor, Application, \
+    Client, Grant, Token
+from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema, TVSeriesSchema,VideoSchema, AwardsSchema, ActorSchema, \
+    ApplicationSchema
+from werkzeug.security import gen_salt
 import datetime
 # # refer microblog app by miguelgrinberg to make models and views flask, just take care this
 # # time we are building the API server not just a basic site and take care to use only class based
@@ -16,6 +20,7 @@ import datetime
 
 class UsersListCreateAPI(Resource):
     # decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -58,6 +63,8 @@ class UsersListCreateAPI(Resource):
 
 class UsersAPI(Resource):
     #decorators = [auth.login_required]
+    #decorators = [oauth.require_oauth]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -92,14 +99,15 @@ class UsersAPI(Resource):
         db.session.commit()
         return {'message': 'data deleted'}
 
-api.add_resource(UsersListCreateAPI, '/movie_recommend/api/v1/users', endpoint='users')
-api.add_resource(UsersAPI, '/movie_recommend/api/v1/users/<int:id>', endpoint='user_settings')
+api.add_resource(UsersListCreateAPI, '/movie_recommend/api/v1/users/', endpoint='users')
+api.add_resource(UsersAPI, '/movie_recommend/api/v1/users/<int:id>/', endpoint='user_settings')
 
 
 ############### UserPreferences API resource ##################
 
 class UserPreferencesListCreateAPI(Resource):
     #decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -180,6 +188,7 @@ class UserPreferencesListCreateAPI(Resource):
 
 class UserPreferencesAPI(Resource):
     #decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -256,8 +265,8 @@ class UserPreferencesAPI(Resource):
 
 
 
-api.add_resource(UserPreferencesListCreateAPI, '/movie_recommend/api/v1/user_preferences', endpoint='user_preferences')
-api.add_resource(UserPreferencesAPI, '/movie_recommend/api/v1/user_preferences/<int:id>', endpoint='user_preferences_settings')
+api.add_resource(UserPreferencesListCreateAPI, '/movie_recommend/api/v1/user_preferences/', endpoint='user_preferences')
+api.add_resource(UserPreferencesAPI, '/movie_recommend/api/v1/user_preferences/<int:id>/', endpoint='user_preferences_settings')
 
 
 ############### FilmIndustry API resource ##################
@@ -265,6 +274,7 @@ api.add_resource(UserPreferencesAPI, '/movie_recommend/api/v1/user_preferences/<
 
 class FilmIndustryListCreateAPI(Resource):
     # decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -297,6 +307,7 @@ class FilmIndustryListCreateAPI(Resource):
 
 class FilmIndustryAPI(Resource):
     #decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -324,8 +335,8 @@ class FilmIndustryAPI(Resource):
         db.session.commit()
         return {'message': 'data deleted'}
 
-api.add_resource(FilmIndustryListCreateAPI, '/movie_recommend/api/v1/film_industries', endpoint='film_industries')
-api.add_resource(FilmIndustryAPI, '/movie_recommend/api/v1/film_industries/<int:id>', endpoint='film_industries_settings')
+api.add_resource(FilmIndustryListCreateAPI, '/movie_recommend/api/v1/film_industries/', endpoint='film_industries')
+api.add_resource(FilmIndustryAPI, '/movie_recommend/api/v1/film_industries/<int:id>/', endpoint='film_industries_settings')
 
 
 
@@ -334,6 +345,7 @@ api.add_resource(FilmIndustryAPI, '/movie_recommend/api/v1/film_industries/<int:
 
 class MovieListCreateAPI(Resource):
     #decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -375,6 +387,7 @@ class MovieListCreateAPI(Resource):
 
 class MovieAPI(Resource):
     #decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -410,13 +423,15 @@ class MovieAPI(Resource):
         return {'message': 'data deleted'}
 
 
-api.add_resource(MovieListCreateAPI, '/movie_recommend/api/v1/movies', endpoint='movies')
-api.add_resource(MovieAPI, '/movie_recommend/api/v1/movies/<int:id>', endpoint='movies_settings')
+api.add_resource(MovieListCreateAPI, '/movie_recommend/api/v1/movies/', endpoint='movies')
+api.add_resource(MovieAPI, '/movie_recommend/api/v1/movies/<int:id>/', endpoint='movies_settings')
 
 
 ############### TvSeries API resource ##################
 
 class TVSeriesListCreateAPI(Resource):
+    decorators=[oauth.require_oauth('email')]
+
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('film_industry_id', type=int, required=True,
@@ -457,7 +472,7 @@ class TVSeriesListCreateAPI(Resource):
 
 
 class TVSeriesAPI(Resource):
-    decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -493,13 +508,14 @@ class TVSeriesAPI(Resource):
         return {'message': 'data deleted'}
 
 
-api.add_resource(TVSeriesListCreateAPI, '/movie_recommend/api/v1/tv_series', endpoint='tv_series')
-api.add_resource(TVSeriesAPI, '/movie_recommend/api/v1/tv_series/<int:id>', endpoint='tv_series_settings')
+api.add_resource(TVSeriesListCreateAPI, '/movie_recommend/api/v1/tv_series/', endpoint='tv_series')
+api.add_resource(TVSeriesAPI, '/movie_recommend/api/v1/tv_series/<int:id>/', endpoint='tv_series_settings')
 
 ############### Video API resource ##################
 
 class VideoListCreateAPI(Resource):
     # decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -541,6 +557,7 @@ class VideoListCreateAPI(Resource):
 
 class VideoAPI(Resource):
     #decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -575,13 +592,14 @@ class VideoAPI(Resource):
         db.session.commit()
         return {'message': 'data deleted'}
 
-api.add_resource(VideoListCreateAPI, '/movie_recommend/api/v1/videos', endpoint='videos')
-api.add_resource(VideoAPI, '/movie_recommend/api/v1/videos/<int:id>', endpoint='videos_settings')
+api.add_resource(VideoListCreateAPI, '/movie_recommend/api/v1/videos/', endpoint='videos')
+api.add_resource(VideoAPI, '/movie_recommend/api/v1/videos/<int:id>/', endpoint='videos_settings')
 
 ############### Awards API resource ##################
 
 class AwardsListCreateAPI(Resource):
     #decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -617,6 +635,7 @@ class AwardsListCreateAPI(Resource):
 
 class AwardsAPI(Resource):
     #decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -648,13 +667,14 @@ class AwardsAPI(Resource):
         return {'message': 'data deleted'}
 
 
-api.add_resource(AwardsListCreateAPI, '/movie_recommend/api/v1/awards', endpoint='awards')
-api.add_resource(AwardsAPI, '/movie_recommend/api/v1/awards/<int:id>', endpoint='awards_settings')
+api.add_resource(AwardsListCreateAPI, '/movie_recommend/api/v1/awards/', endpoint='awards')
+api.add_resource(AwardsAPI, '/movie_recommend/api/v1/awards/<int:id>/', endpoint='awards_settings')
 
 ############### Actors API resource ##################
 
 class ActorsListCreateAPI(Resource):
     #decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -741,6 +761,7 @@ class ActorsListCreateAPI(Resource):
 
 class ActorsAPI(Resource):
     #decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -806,13 +827,14 @@ class ActorsAPI(Resource):
         return {'message': 'data deleted'}
 
 
-api.add_resource(ActorsListCreateAPI, '/movie_recommend/api/v1/actors', endpoint='actors')
-api.add_resource(ActorsAPI, '/movie_recommend/api/v1/actors/<int:id>', endpoint='actors_settings')
+api.add_resource(ActorsListCreateAPI, '/movie_recommend/api/v1/actors/', endpoint='actors')
+api.add_resource(ActorsAPI, '/movie_recommend/api/v1/actors/<int:id>/', endpoint='actors_settings')
 
 ############### Genre API resource ##################
 
 class GenreListCreateAPI(Resource):
     #decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -841,6 +863,7 @@ class GenreListCreateAPI(Resource):
 
 class GenreAPI(Resource):
     #decorators = [auth.login_required]
+    decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -866,5 +889,199 @@ class GenreAPI(Resource):
         db.session.commit()
         return {'message': 'data deleted'}
 
-api.add_resource(GenreListCreateAPI, '/movie_recommend/api/v1/genres', endpoint='genres')
-api.add_resource(GenreAPI, '/movie_recommend/api/v1/genres/<int:id>', endpoint='genre_settings')
+api.add_resource(GenreListCreateAPI, '/movie_recommend/api/v1/genres/', endpoint='genres')
+api.add_resource(GenreAPI, '/movie_recommend/api/v1/genres/<int:id>/', endpoint='genre_settings')
+
+############ Token Authentication specification #################
+
+class ApplicationListCreateAPI(Resource):
+
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('name', type=str, required=True,
+                                   help='No name Provided',
+                                   location='json')
+        super(ApplicationListCreateAPI, self).__init__()
+
+    def get(self):
+        applications = Application.query.all()
+        application_schema = ApplicationSchema(many=True)
+        result = application_schema.dump(applications)
+        return {"genre_list": result.data}
+
+    def post(self):
+        args = self.reqparse.parse_args()
+        application = Application(str(args['name']))
+        db.session.add(application)
+        db.session.commit()
+        application_schema = ApplicationSchema()
+        result = application_schema.dump(application)
+
+        return {"data": result.data ,"message":  "data inserted" }, 201
+
+
+class ApplicationAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('name', type=str, location='json')
+        super(ApplicationAPI, self).__init__()
+
+    def get(self, id):
+        application = Application.query.get(id)
+        application_schema = ApplicationSchema()
+        result = application_schema.dump(application)
+        return {"genre_details": result.data}
+
+    def put(self, id):
+        args = self.reqparse.parse_args()
+        application = Application.query.get(id)
+        application.name = args['name']
+        db.session.commit()
+        return {'message': 'data updated'}
+
+    def delete(self, id):
+        application = Application.query.get(id)
+        db.session.delete(application)
+        db.session.commit()
+        return {'message': 'data deleted'}
+
+
+def current_user():
+    if 'id' in session:
+        uid = session['id']
+        return User.query.get(uid)
+    return None
+
+
+@app.route('/', methods=('GET', 'POST'))
+def home():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            user = User(username=username)
+            db.session.add(user)
+            db.session.commit()
+        session['id'] = user.id
+        return redirect('/')
+    user = current_user()
+    return render_template('home.html', user=user)
+
+
+@app.route('/client')
+def client():
+    user = current_user()
+    if not user:
+        return redirect('/')
+    item = Client(
+        client_id=gen_salt(40),
+        client_secret=gen_salt(50),
+        _redirect_uris=' '.join([
+            'http://localhost:8000/authorized',
+            'http://127.0.0.1:8000/authorized',
+            'http://127.0.0.1:8000/authorized',
+            'http://127.0.0.1:8000/authorized',
+            ]),
+        _default_scopes='email',
+        user_id=user.id,
+    )
+    db.session.add(item)
+    db.session.commit()
+    return jsonify(
+        client_id=item.client_id,
+        client_secret=item.client_secret,
+    )
+
+@oauth.clientgetter
+def load_client(client_id):
+    return Client.query.filter_by(client_id=client_id).first()
+
+
+@oauth.grantgetter
+def load_grant(client_id, code):
+    return Grant.query.filter_by(client_id=client_id, code=code).first()
+
+
+@oauth.grantsetter
+def save_grant(client_id, code, request, *args, **kwargs):
+    # decide the expires time yourself
+    expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
+    grant = Grant(
+        client_id=client_id,
+        code=code['code'],
+        redirect_uri=request.redirect_uri,
+        _scopes=' '.join(request.scopes),
+        user=current_user(),
+        expires=expires
+    )
+    db.session.add(grant)
+    db.session.commit()
+    return grant
+
+
+@oauth.tokengetter
+def load_token(access_token=None, refresh_token=None):
+    if access_token:
+        return Token.query.filter_by(access_token=access_token).first()
+    elif refresh_token:
+        return Token.query.filter_by(refresh_token=refresh_token).first()
+
+
+@oauth.tokensetter
+def save_token(token, request, *args, **kwargs):
+    toks = Token.query.filter_by(
+        client_id=request.client.client_id,
+        user_id=request.user.id
+    )
+    # make sure that every client has only one token connected to a user
+    for t in toks:
+        db.session.delete(t)
+
+    expires_in = token.pop('expires_in')
+    expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in)
+
+    tok = Token(
+        access_token=token['access_token'],
+        refresh_token=token['refresh_token'],
+        token_type=token['token_type'],
+        _scopes=token['scope'],
+        expires=expires,
+        client_id=request.client.client_id,
+        user_id=request.user.id,
+    )
+    db.session.add(tok)
+    db.session.commit()
+    return tok
+
+
+@app.route('/oauth/token', methods=['GET', 'POST'])
+@oauth.token_handler
+def access_token():
+    return None
+
+
+@app.route('/oauth/authorize', methods=['GET', 'POST'])
+@oauth.authorize_handler
+def authorize(*args, **kwargs):
+    user = current_user()
+    if not user:
+        return redirect('/')
+    if request.method == 'GET':
+        client_id = kwargs.get('client_id')
+        client = Client.query.filter_by(client_id=client_id).first()
+        kwargs['client'] = client
+        kwargs['user'] = user
+        return render_template('authorize.html', **kwargs)
+
+    confirm = request.form.get('confirm', 'no')
+    return confirm == 'yes'
+
+
+@app.route('/api/me')
+@oauth.require_oauth()
+def me():
+    user = request.oauth.user
+    return jsonify(username=user.username)
