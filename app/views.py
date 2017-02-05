@@ -7,7 +7,7 @@ from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
 from .models import User, UserPreferences, FilmIndustry, Genre, Movie, TVSeries, Video , Award ,Actor, Application, \
-    Grant, AccessToken
+    Grant, AccessToken, RefreshToken
 from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema, TVSeriesSchema,VideoSchema, AwardsSchema, ActorSchema, \
     ApplicationSchema, GrantSchema
 from werkzeug.security import gen_salt
@@ -1013,10 +1013,12 @@ class CreateTokenAPI(Resource):
         access_token = AccessToken(user, application, str(args['grant_type']), token, expiry, _scope)
         db.session.add(access_token)
         db.session.commit()
-        refresh_token_instance = RefreshToken(user, application, access_token, )
+        refresh_token_instance = RefreshToken(user, application, access_token, str(args['grant_type']), refresh_token, expiry, _scope)
+        db.session.add(refresh_token_instance)
+        db.session.commit()
 
 
-class RefreshToken(Resource):
+class RefreshTokenAPI(Resource):
     """
         Refresh Token API
     """
