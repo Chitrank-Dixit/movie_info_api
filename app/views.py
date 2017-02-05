@@ -989,6 +989,14 @@ class ApplicationAPI(Resource):
 
 # get the grant (code to make request from the other ends)
 
+class CreateToken(Resource):
+    """
+        Create the create token api
+    """
+
+
+
+
 class GrantAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
