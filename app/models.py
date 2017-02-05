@@ -1,7 +1,9 @@
 from . import db
 import re
 from hashlib import md5
+from enum import Enum
 from sqlalchemy.orm import validates
+from sqlalchemy_utils.types.choice import ChoiceType
 
 ################ relationship table (many to many relationships) ###############
 
@@ -378,83 +380,106 @@ class Actor(db.Model):
 ################### Token Authentication Model ##########################
 
 
+class ClientType(Enum):
+    Confidential = 1
+    Public = 2
+
+class AuthorizationGrantType(Enum):
+    AuthorizationCode = 1
+    Implicit = 2
+    ResourceOwnerPasswordBased = 3
+    ClientCredentials = 4
+
+
 class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(40))
     client_id = db.Column(db.String(40), primary_key=True)
     client_secret = db.Column(db.String(128), unique=True, index=True,
                               nullable=False)
+    client_type = db.Column(ChoiceType(ClientType, impl=db.Integer()))
+    authorization_grant_type = db.Column(ChoiceType(AuthorizationGrantType, impl=db.Integer()))
+
     # creator of the client, not required
     user_id = db.Column(db.ForeignKey('user.id'))
     # required if you need to support client credential
     user = db.relationship('User')
 
-    @property
-    def client_type(self):
-        if self.is_confidential:
-            return 'confidential'
-        return 'public'
+    # def generate_client_id(self):
+    #     generated_client_id = self.client_id
+    #     return generated_client_id
+    #
+    # def generate_client_secret(self):
+    #     generated_client_secret = self.client_secret
+    #     return generated_client_secret
 
-    @property
-    def redirect_uris(self):
-        if self._redirect_uris:
-            return self._redirect_uris.split()
-        return []
+    # @property
+    # def client_type(self):
+    #     if self.is_confidential:
+    #         return 'confidential'
+    #     return 'public'
+    #
+    # @property
+    # def redirect_uris(self):
+    #     if self._redirect_uris:
+    #         return self._redirect_uris.split()
+    #     return []
+    #
+    # @property
+    # def default_scopes(self):
+    #     if self._default_scopes:
+    #         return self._default_scopes.split()
+    #     return []
 
-    @property
-    def default_scopes(self):
-        if self._default_scopes:
-            return self._default_scopes.split()
-        return []
 
     # authorization_grant_type =
     # redirect_uris =
 
 
-class Client(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    # human readable name, not required
-    name = db.Column(db.String(40))
-
-    # human readable description, not required
-    description = db.Column(db.String(400))
-
-    # creator of the client, not required
-    user_id = db.Column(db.ForeignKey('user.id'))
-    # required if you need to support client credential
-    user = db.relationship('User')
-
-    client_id = db.Column(db.String(40))
-    client_secret = db.Column(db.String(55), unique=True, index=True,
-                              nullable=False)
-
-    # public or confidential
-    is_confidential = db.Column(db.Boolean)
-
-    _redirect_uris = db.Column(db.Text)
-    _default_scopes = db.Column(db.Text)
-
-    @property
-    def client_type(self):
-        if self.is_confidential:
-            return 'confidential'
-        return 'public'
-
-    @property
-    def redirect_uris(self):
-        if self._redirect_uris:
-            return self._redirect_uris.split()
-        return []
-
-    @property
-    def default_redirect_uri(self):
-        return self.redirect_uris[0]
-
-    @property
-    def default_scopes(self):
-        if self._default_scopes:
-            return self._default_scopes.split()
-        return []
+# class Client(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     # human readable name, not required
+#     name = db.Column(db.String(40))
+#
+#     # human readable description, not required
+#     description = db.Column(db.String(400))
+#
+#     # creator of the client, not required
+#     user_id = db.Column(db.ForeignKey('user.id'))
+#     # required if you need to support client credential
+#     user = db.relationship('User')
+#
+#     client_id = db.Column(db.String(40))
+#     client_secret = db.Column(db.String(55), unique=True, index=True,
+#                               nullable=False)
+#
+#     # public or confidential
+#     is_confidential = db.Column(db.Boolean)
+#
+#     _redirect_uris = db.Column(db.Text)
+#     _default_scopes = db.Column(db.Text)
+#
+#     @property
+#     def client_type(self):
+#         if self.is_confidential:
+#             return 'confidential'
+#         return 'public'
+#
+#     @property
+#     def redirect_uris(self):
+#         if self._redirect_uris:
+#             return self._redirect_uris.split()
+#         return []
+#
+#     @property
+#     def default_redirect_uri(self):
+#         return self.redirect_uris[0]
+#
+#     @property
+#     def default_scopes(self):
+#         if self._default_scopes:
+#             return self._default_scopes.split()
+#         return []
 
 
 class Grant(db.Model):
@@ -465,13 +490,16 @@ class Grant(db.Model):
     )
     user = db.relationship('User')
 
-    client_id = db.Column(
-        db.String(40), db.ForeignKey('client.client_id'),
-        nullable=False,
-    )
-    client = db.relationship('Client')
+    # client_id = db.Column(
+    #     db.String(40), db.ForeignKey('client.client_id'),
+    #     nullable=False,
+    # )
+    # client = db.relationship('Client')
 
     code = db.Column(db.String(255), index=True, nullable=False)
+
+    application_id = db.Column(db.ForeignKey('application.id'))
+    application = db.relationship('Application')
 
     redirect_uri = db.Column(db.String(255))
     expires = db.Column(db.DateTime)
@@ -490,13 +518,49 @@ class Grant(db.Model):
         return []
 
 
-class Token(db.Model):
+
+
+
+# class Token(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     client_id = db.Column(
+#         db.String(40), db.ForeignKey('client.client_id'),
+#         nullable=False,
+#     )
+#     client = db.relationship('Client')
+#
+#     user_id = db.Column(
+#         db.Integer, db.ForeignKey('user.id')
+#     )
+#     user = db.relationship('User')
+#
+#     application_id = db.Column(
+#         db.Integer, db.ForeignKey('application.id')
+#     )
+#     application = db.relationship('Application')
+#
+#     # currently only bearer is supported
+#     token_type = db.Column(db.String(40))
+#
+#     access_token = db.Column(db.String(40), unique=True)
+#     refresh_token = db.Column(db.String(40), unique=True)
+#     expires = db.Column(db.DateTime)
+#     _scopes = db.Column(db.Text)
+#
+#     def delete(self):
+#         db.session.delete(self)
+#         db.session.commit()
+#         return self
+#
+#     @property
+#     def scopes(self):
+#         if self._scopes:
+#             return self._scopes.split()
+#         return []
+
+
+class AccessToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    client_id = db.Column(
-        db.String(40), db.ForeignKey('client.client_id'),
-        nullable=False,
-    )
-    client = db.relationship('Client')
 
     user_id = db.Column(
         db.Integer, db.ForeignKey('user.id')
@@ -511,8 +575,7 @@ class Token(db.Model):
     # currently only bearer is supported
     token_type = db.Column(db.String(40))
 
-    access_token = db.Column(db.String(40), unique=True)
-    refresh_token = db.Column(db.String(40), unique=True)
+    token = db.Column(db.String(30), unique=True)
     expires = db.Column(db.DateTime)
     _scopes = db.Column(db.Text)
 
@@ -527,3 +590,40 @@ class Token(db.Model):
             return self._scopes.split()
         return []
 
+
+class RefreshToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('user.id')
+    )
+    user = db.relationship('User')
+
+    application_id = db.Column(
+        db.Integer, db.ForeignKey('application.id')
+    )
+    application = db.relationship('Application')
+
+    access_token_id = db.Column(
+        db.Integer, db.ForeignKey('access_token.id')
+    )
+
+    access_token = db.relationship('AccessToken')
+    # currently only bearer is supported
+    token_type = db.Column(db.String(40))
+
+    token = db.Column(db.String(40), unique=True)
+    expires = db.Column(db.DateTime)
+    _scopes = db.Column(db.Text)
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+        return self
+
+    @property
+    def scopes(self):
+        if self._scopes:
+            return self._scopes.split()
+        return []

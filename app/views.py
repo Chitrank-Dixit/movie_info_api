@@ -1,3 +1,4 @@
+import random
 from flask import session, request, redirect, render_template
 from flask.ext.restful import Resource
 from app import api, app, auth,db, oauth
@@ -6,9 +7,9 @@ from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
 from .models import User, UserPreferences, FilmIndustry, Genre, Movie, TVSeries, Video , Award ,Actor, Application, \
-    Client, Grant, Token
+    Grant
 from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema, TVSeriesSchema,VideoSchema, AwardsSchema, ActorSchema, \
-    ApplicationSchema
+    ApplicationSchema, GrantSchema
 from werkzeug.security import gen_salt
 import datetime
 # # refer microblog app by miguelgrinberg to make models and views flask, just take care this
@@ -20,7 +21,7 @@ import datetime
 
 class UsersListCreateAPI(Resource):
     # decorators = [auth.login_required]
-    decorators=[oauth.require_oauth('email')]
+    #decorators=[oauth.require_oauth('email')]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -899,9 +900,33 @@ class ApplicationListCreateAPI(Resource):
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
+        #'name', 'client_id', 'client_secret', 'user'
         self.reqparse.add_argument('name', type=str, required=True,
                                    help='No name Provided',
                                    location='json')
+
+        self.reqparse.add_argument('client_type', type=str, required=True,
+                                   help='No name Provided',
+                                   location='json')
+
+
+        self.reqparse.add_argument('authorization_grant_type', type=str, required=True,
+                                       help='No name Provided',
+                                       location='json')
+
+
+        # self.reqparse.add_argument('client_id', type=str, required=True,
+        #                            help='No client_id Provided',
+        #                            location='json')
+        #
+        # self.reqparse.add_argument('client_secret', type=str, required=True,
+        #                            help='No client_secret Provided',
+        #                            location='json')
+
+        self.reqparse.add_argument('user_id', type=str, required=True,
+                                   help='No user_id Provided',
+                                   location='json')
+
         super(ApplicationListCreateAPI, self).__init__()
 
     def get(self):
@@ -912,7 +937,10 @@ class ApplicationListCreateAPI(Resource):
 
     def post(self):
         args = self.reqparse.parse_args()
-        application = Application(str(args['name']))
+        client_id = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(40))
+        client_secret = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(128))
+        user = User.query.get(args['user_id'])
+        application = Application(str(args['name']), str(args['client_type']), str(['authorization_grant_type']), client_id, client_secret, user)
         db.session.add(application)
         db.session.commit()
         application_schema = ApplicationSchema()
@@ -927,6 +955,11 @@ class ApplicationAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('name', type=str, location='json')
+        self.reqparse.add_argument('client_type', type=str, location='json')
+        self.reqparse.add_argument('authorization_grant_type', type=int, location='json')
+        # self.reqparse.add_argument('client_id', type=str, location='json')
+        # self.reqparse.add_argument('client_secret', type=str, location='json')
+        self.reqparse.add_argument('user_id', type=int, location='json')
         super(ApplicationAPI, self).__init__()
 
     def get(self, id):
@@ -937,8 +970,14 @@ class ApplicationAPI(Resource):
 
     def put(self, id):
         args = self.reqparse.parse_args()
+        user = User.query.get(args['user_id'])
         application = Application.query.get(id)
         application.name = args['name']
+        application.client_type = args['client_type']
+        application.authorization_grant_type = args['authorization_grant_type']
+        application.client_id = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(40))
+        application.client_secret = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(128))
+        application.user = user
         db.session.commit()
         return {'message': 'data updated'}
 
@@ -948,141 +987,156 @@ class ApplicationAPI(Resource):
         db.session.commit()
         return {'message': 'data deleted'}
 
+# get the grant (code to make request from the other ends)
 
-def current_user():
-    if 'id' in session:
-        uid = session['id']
-        return User.query.get(uid)
-    return None
+class GrantAPI(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('user_id', type=str, location='json')
+        super(GrantAPI, self).__init__()
 
+    def get(self, user_id):
+        grant = Grant.query.filter_by(user_id=user_id)
+        grant_schema = GrantSchema()
+        result = grant_schema.dump(grant)
+        return {"grant_details": request.data}
 
-@app.route('/', methods=('GET', 'POST'))
-def home():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            user = User(username=username)
-            db.session.add(user)
-            db.session.commit()
-        session['id'] = user.id
-        return redirect('/')
-    user = current_user()
-    return render_template('home.html', user=user)
+api.add_resource(GrantAPI, '/movie_recommend/api/v1/grant/<int:user_id>/', endpoint='grant_settings')
 
-
-@app.route('/client')
-def client():
-    user = current_user()
-    if not user:
-        return redirect('/')
-    item = Client(
-        client_id=gen_salt(40),
-        client_secret=gen_salt(50),
-        _redirect_uris=' '.join([
-            'http://localhost:8000/authorized',
-            'http://127.0.0.1:8000/authorized',
-            'http://127.0.0.1:8000/authorized',
-            'http://127.0.0.1:8000/authorized',
-            ]),
-        _default_scopes='email',
-        user_id=user.id,
-    )
-    db.session.add(item)
-    db.session.commit()
-    return jsonify(
-        client_id=item.client_id,
-        client_secret=item.client_secret,
-    )
-
-@oauth.clientgetter
-def load_client(client_id):
-    return Client.query.filter_by(client_id=client_id).first()
-
-
-@oauth.grantgetter
-def load_grant(client_id, code):
-    return Grant.query.filter_by(client_id=client_id, code=code).first()
-
-
-@oauth.grantsetter
-def save_grant(client_id, code, request, *args, **kwargs):
-    # decide the expires time yourself
-    expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
-    grant = Grant(
-        client_id=client_id,
-        code=code['code'],
-        redirect_uri=request.redirect_uri,
-        _scopes=' '.join(request.scopes),
-        user=current_user(),
-        expires=expires
-    )
-    db.session.add(grant)
-    db.session.commit()
-    return grant
-
-
-@oauth.tokengetter
-def load_token(access_token=None, refresh_token=None):
-    if access_token:
-        return Token.query.filter_by(access_token=access_token).first()
-    elif refresh_token:
-        return Token.query.filter_by(refresh_token=refresh_token).first()
-
-
-@oauth.tokensetter
-def save_token(token, request, *args, **kwargs):
-    toks = Token.query.filter_by(
-        client_id=request.client.client_id,
-        user_id=request.user.id
-    )
-    # make sure that every client has only one token connected to a user
-    for t in toks:
-        db.session.delete(t)
-
-    expires_in = token.pop('expires_in')
-    expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in)
-
-    tok = Token(
-        access_token=token['access_token'],
-        refresh_token=token['refresh_token'],
-        token_type=token['token_type'],
-        _scopes=token['scope'],
-        expires=expires,
-        client_id=request.client.client_id,
-        user_id=request.user.id,
-    )
-    db.session.add(tok)
-    db.session.commit()
-    return tok
-
-
-@app.route('/oauth/token', methods=['GET', 'POST'])
-@oauth.token_handler
-def access_token():
-    return None
-
-
-@app.route('/oauth/authorize', methods=['GET', 'POST'])
-@oauth.authorize_handler
-def authorize(*args, **kwargs):
-    user = current_user()
-    if not user:
-        return redirect('/')
-    if request.method == 'GET':
-        client_id = kwargs.get('client_id')
-        client = Client.query.filter_by(client_id=client_id).first()
-        kwargs['client'] = client
-        kwargs['user'] = user
-        return jsonify(client_id=kwargs["client_id"], scope=kwargs["scopes"], response_type=kwargs["response_type"], redirect_uri=kwargs["redirect_uri"])
-        #return render_template('authorize.html', **kwargs)
-
-    confirm = request.form.get('confirm', 'no')
-    return confirm == 'yes'
-
-
-@app.route('/api/me')
-@oauth.require_oauth()
-def me():
-    user = request.oauth.user
-    return jsonify(username=user.username)
+# def current_user():
+#     if 'id' in session:
+#         uid = session['id']
+#         return User.query.get(uid)
+#     return None
+#
+#
+# @app.route('/', methods=('GET', 'POST'))
+# def home():
+#     if request.method == 'POST':
+#         username = request.form.get('username')
+#         user = User.query.filter_by(username=username).first()
+#         if not user:
+#             user = User(username=username)
+#             db.session.add(user)
+#             db.session.commit()
+#         session['id'] = user.id
+#         return redirect('/')
+#     user = current_user()
+#     return render_template('home.html', user=user)
+#
+#
+# @app.route('/client')
+# def client():
+#     user = current_user()
+#     if not user:
+#         return redirect('/')
+#     item = Client(
+#         client_id=gen_salt(40),
+#         client_secret=gen_salt(50),
+#         _redirect_uris=' '.join([
+#             'http://localhost:8000/authorized',
+#             'http://127.0.0.1:8000/authorized',
+#             'http://127.0.0.1:8000/authorized',
+#             'http://127.0.0.1:8000/authorized',
+#             ]),
+#         _default_scopes='email',
+#         user_id=user.id,
+#     )
+#     db.session.add(item)
+#     db.session.commit()
+#     return jsonify(
+#         client_id=item.client_id,
+#         client_secret=item.client_secret,
+#     )
+#
+# @oauth.clientgetter
+# def load_client(client_id):
+#     return Client.query.filter_by(client_id=client_id).first()
+#
+#
+# @oauth.grantgetter
+# def load_grant(client_id, code):
+#     return Grant.query.filter_by(client_id=client_id, code=code).first()
+#
+#
+# @oauth.grantsetter
+# def save_grant(client_id, code, request, *args, **kwargs):
+#     # decide the expires time yourself
+#     expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
+#     grant = Grant(
+#         client_id=client_id,
+#         code=code['code'],
+#         redirect_uri=request.redirect_uri,
+#         _scopes=' '.join(request.scopes),
+#         user=current_user(),
+#         expires=expires
+#     )
+#     db.session.add(grant)
+#     db.session.commit()
+#     return grant
+#
+#
+# @oauth.tokengetter
+# def load_token(access_token=None, refresh_token=None):
+#     if access_token:
+#         return Token.query.filter_by(access_token=access_token).first()
+#     elif refresh_token:
+#         return Token.query.filter_by(refresh_token=refresh_token).first()
+#
+#
+# @oauth.tokensetter
+# def save_token(token, request, *args, **kwargs):
+#     toks = Token.query.filter_by(
+#         client_id=request.client.client_id,
+#         user_id=request.user.id
+#     )
+#     # make sure that every client has only one token connected to a user
+#     for t in toks:
+#         db.session.delete(t)
+#
+#     expires_in = token.pop('expires_in')
+#     expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in)
+#
+#     tok = Token(
+#         access_token=token['access_token'],
+#         refresh_token=token['refresh_token'],
+#         token_type=token['token_type'],
+#         _scopes=token['scope'],
+#         expires=expires,
+#         client_id=request.client.client_id,
+#         user_id=request.user.id,
+#     )
+#     db.session.add(tok)
+#     db.session.commit()
+#     return tok
+#
+#
+# @app.route('/oauth/token', methods=['GET', 'POST'])
+# @oauth.token_handler
+# def access_token():
+#     return None
+#
+#
+# @app.route('/oauth/authorize', methods=['GET', 'POST'])
+# @oauth.authorize_handler
+# def authorize(*args, **kwargs):
+#     user = current_user()
+#     if not user:
+#         return redirect('/')
+#     if request.method == 'GET':
+#         client_id = kwargs.get('client_id')
+#         client = Client.query.filter_by(client_id=client_id).first()
+#         kwargs['client'] = client
+#         kwargs['user'] = user
+#         return jsonify(client_id=kwargs["client_id"], scope=kwargs["scopes"], response_type=kwargs["response_type"], redirect_uri=kwargs["redirect_uri"])
+#         #return render_template('authorize.html', **kwargs)
+#
+#     confirm = request.form.get('confirm', 'no')
+#     return confirm == 'yes'
+#
+#
+# @app.route('/api/me')
+# @oauth.require_oauth()
+# def me():
+#     user = request.oauth.user
+#     return jsonify(username=user.username)

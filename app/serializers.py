@@ -1,6 +1,7 @@
 __author__ = 'chitrankdixit'
 from app import db, ma
-from .models import User, UserPreferences, Genre, FilmIndustry, Movie, Video, TVSeries, Award ,Actor, Application, Token
+from .models import User, UserPreferences, Genre, FilmIndustry, Movie, Video, TVSeries, Award ,Actor, Application, \
+    Grant
 
 
 class UserSchema(ma.Schema):
@@ -81,9 +82,13 @@ class UserPreferencesSchema(ma.Schema):
 class ApplicationSchema(ma.Schema):
     class Meta:
         model = Application
-        fields = ()
+        fields = ('id', 'name', 'client_id', 'client_secret', 'user')
+    # required if you need to support client credential
 
-class TokenSchema(ma.Schema):
+    user = ma.Nested(UserSchema)
+
+
+class GrantSchema(ma.Schema):
     class Meta:
-        model = Token
-        fields = ()
+        model = Grant
+        fields = ('code', '_scopes')

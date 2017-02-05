@@ -2,8 +2,8 @@ from flask import Flask, url_for, session, request, jsonify
 from flask_oauthlib.client import OAuth
 
 # need to change this frequently as per the current flow in the app
-CLIENT_ID = 'ctmXkC6CWMZjh259so0ZEovqjEGTq4fHJOCvxgb2'
-CLIENT_SECRET = 'EUt18ISsh5stUljSJgGUwtYv9tQR1cIQ8guPhPbO0LiUY03juS'
+CLIENT_ID = 'FC7Lhxr9DKb1DTOL1YnFnSyM5O7SNTYugHECOr0M'
+CLIENT_SECRET = 'hfSNassnnuffQQQhhqUUAOQqBnUDpxkXJWoIAgZ8SdrLa7GS6O'
 
 
 app = Flask(__name__)
@@ -36,7 +36,7 @@ def index():
 
 @app.route('/authorized')
 def authorized():
-    import pdb;pdb.set_trace()
+    #import pdb;pdb.set_trace()
     resp = remote.authorized_response()
     if resp is None:
         return 'Access denied: reason=%s error=%s' % (
@@ -57,4 +57,4 @@ if __name__ == '__main__':
     import os
     os.environ['DEBUG'] = 'true'
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = 'true'
-    app.run(host='localhost', port=8000)
+    app.run(host='localhost', port=8080)

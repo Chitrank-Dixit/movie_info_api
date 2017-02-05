@@ -37,31 +37,31 @@ oauth = OAuth2Provider()
 oauth.init_app(app)
 
 # social oauth providers
-social_oauth = OAuth()
-
-
-# twitter
-twitter = social_oauth.remote_app('twitter',
-    base_url='https://api.twitter.com/1/',
-    request_token_url='https://api.twitter.com/oauth/request_token',
-    access_token_url='https://api.twitter.com/oauth/access_token',
-    authorize_url='https://api.twitter.com/oauth/authenticate',
-    consumer_key='<your key here>',
-    consumer_secret='<your secret here>'
-)
-
-
-# facebook
-
-facebook = social_oauth.remote_app('facebook',
-    base_url='https://graph.facebook.com/',
-    request_token_url=None,
-    access_token_url='/oauth/access_token',
-    authorize_url='https://www.facebook.com/dialog/oauth',
-    consumer_key="",
-    consumer_secret="",
-    request_token_params={'scope': 'email'}
-)
+# social_oauth = OAuth()
+#
+#
+# # twitter
+# twitter = social_oauth.remote_app('twitter',
+#     base_url='https://api.twitter.com/1/',
+#     request_token_url='https://api.twitter.com/oauth/request_token',
+#     access_token_url='https://api.twitter.com/oauth/access_token',
+#     authorize_url='https://api.twitter.com/oauth/authenticate',
+#     consumer_key='<your key here>',
+#     consumer_secret='<your secret here>'
+# )
+#
+#
+# # facebook
+#
+# facebook = social_oauth.remote_app('facebook',
+#     base_url='https://graph.facebook.com/',
+#     request_token_url=None,
+#     access_token_url='/oauth/access_token',
+#     authorize_url='https://www.facebook.com/dialog/oauth',
+#     consumer_key="",
+#     consumer_secret="",
+#     request_token_params={'scope': 'email'}
+# )
 
 api = Api(app)
 auth = HTTPBasicAuth()
@@ -71,13 +71,13 @@ ma = Marshmallow(app)
 # https://flask-migrate.readthedocs.io/en/latest/
 
 
-manager = Manager(app)
-manager.add_command('db', MigrateCommand)
+# manager = Manager(app)
+# manager.add_command('db', MigrateCommand)
 
 
 
 from app import views, models
-from app.models import User, UserPreferences, Movie, Video, TVSeries, FilmIndustry, Award, Actor, Genre, Application, Client, Grant, Token
+from app.models import User, UserPreferences, Movie, Video, TVSeries, FilmIndustry, Award, Actor, Genre, Application, Grant
 admin.add_view(ModelView(User, db.session))
 admin.add_view(ModelView(UserPreferences, db.session))
 admin.add_view(ModelView(Movie, db.session))
@@ -88,9 +88,8 @@ admin.add_view(ModelView(Award, db.session))
 admin.add_view(ModelView(Actor, db.session))
 admin.add_view(ModelView(Genre, db.session))
 admin.add_view(ModelView(Application, db.session))
-admin.add_view(ModelView(Client, db.session))
 admin.add_view(ModelView(Grant, db.session))
-admin.add_view(ModelView(Token, db.session))
+
 
 
 
