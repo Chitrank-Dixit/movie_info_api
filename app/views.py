@@ -7,7 +7,7 @@ from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
 from .models import User, UserPreferences, FilmIndustry, Genre, Movie, TVSeries, Video , Award ,Actor, Application, \
-    Grant
+    Grant, AccessToken
 from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema, TVSeriesSchema,VideoSchema, AwardsSchema, ActorSchema, \
     ApplicationSchema, GrantSchema
 from werkzeug.security import gen_salt
@@ -950,7 +950,7 @@ class ApplicationListCreateAPI(Resource):
 
 
 class ApplicationAPI(Resource):
-    decorators = [auth.login_required]
+    #decorators = [auth.login_required]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -989,11 +989,42 @@ class ApplicationAPI(Resource):
 
 # get the grant (code to make request from the other ends)
 
-class CreateToken(Resource):
+class CreateTokenAPI(Resource):
     """
         Create the create token api
     """
+    def __init__(self):
+        self.regparse = reqparse.RequestParser()
+        self.regparse.add_argument('grant_type', type=str, location='json')
+        self.regparse.add_argument('username', type=str, location='json')
+        self.regparse.add_argument('password', type=str, location='json')
+        self.regparse.add_argument('client_id', type=str, location='json')
+        self.regparse.add_argument('client_secret', type=str, location='json')
+        super(CreateTokenAPI).__init__()
+
+    def post(self):
+        args = self.reqparse.parse_args()
+        application = Application.query.get(client_id=str(args['client_id']), client_secret=str(args['client_secret']))
+        token = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(30))
+        refresh_token = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(30))
+        user = User.query.get(username=args['username'])
+        expiry = None # time of expiration of the Token
+        _scope = "read write"
+        access_token = AccessToken(user, application, str(args['grant_type']), token, expiry, _scope)
+        db.session.add(access_token)
+        db.session.commit()
+        refresh_token_instance = RefreshToken(user, application, access_token, )
+
+
+class RefreshToken(Resource):
+    """
+        Refresh Token API
+    """
     pass
+
+
+
+
 
 
 

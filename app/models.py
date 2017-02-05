@@ -573,7 +573,7 @@ class AccessToken(db.Model):
     application = db.relationship('Application')
 
     # currently only bearer is supported
-    token_type = db.Column(db.String(40))
+    grant_type = db.Column(db.String(40))
 
     token = db.Column(db.String(30), unique=True)
     expires = db.Column(db.DateTime)
@@ -611,7 +611,7 @@ class RefreshToken(db.Model):
 
     access_token = db.relationship('AccessToken')
     # currently only bearer is supported
-    token_type = db.Column(db.String(40))
+    grant_type = db.Column(db.String(40))
 
     token = db.Column(db.String(40), unique=True)
     expires = db.Column(db.DateTime)
