@@ -993,6 +993,7 @@ class CreateToken(Resource):
     """
         Create the create token api
     """
+    pass
 
 
 
