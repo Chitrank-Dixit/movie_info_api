@@ -4,14 +4,18 @@
 
 import datetime
 from app import User, oauth, db
-from app.models import Grant
+from app.models import Grant, AccessToken
 from functools import wraps
 
-def set_cookie(f):
-    @wraps(f)
-    def decorated_function(*args, **kws):
+
+def authroize_token(function):
+    @wraps(function)
+    def decorated_function(*args, **kwargs):
         # TODO: Check for correct token here
-        return f(*args, **kws)
+        access_token = AccessToken.query.get()
+        if access_token:
+            return function(True, *args, **kwargs)
+        return function(*args, **kwargs)
     return decorated_function
 
 

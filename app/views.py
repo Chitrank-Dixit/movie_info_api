@@ -6,6 +6,7 @@ from app import marshal
 from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
+from app.decorators import authroize_token
 from .models import User, UserPreferences, FilmIndustry, Genre, Movie, TVSeries, Video , Award ,Actor, Application, \
     Grant, AccessToken, RefreshToken
 from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema, TVSeriesSchema,VideoSchema, AwardsSchema, ActorSchema, \
@@ -835,7 +836,8 @@ api.add_resource(ActorsAPI, '/movie_recommend/api/v1/actors/<int:id>/', endpoint
 
 class GenreListCreateAPI(Resource):
     #decorators = [auth.login_required]
-    decorators=[oauth.require_oauth('email')]
+    #decorators=[oauth.require_oauth('email')]
+    decorators = [authroize_token]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -987,12 +989,16 @@ class ApplicationAPI(Resource):
         db.session.commit()
         return {'message': 'data deleted'}
 
+api.add_resource(ApplicationListCreateAPI, '/movie_recommend/api/v1/applications/', endpoint='applications')
+api.add_resource(ApplicationAPI, '/movie_recommend/api/v1/application/<int:id/', endpoint='application_settings')
+
 # get the grant (code to make request from the other ends)
 
 class CreateTokenAPI(Resource):
     """
         Create the create token api
     """
+
     def __init__(self):
         self.regparse = reqparse.RequestParser()
         self.regparse.add_argument('grant_type', type=str, location='json')
@@ -1016,14 +1022,41 @@ class CreateTokenAPI(Resource):
         refresh_token_instance = RefreshToken(user, application, access_token, str(args['grant_type']), refresh_token, expiry, _scope)
         db.session.add(refresh_token_instance)
         db.session.commit()
+        return {'access_token': token, 'refresh_token': refresh_token, 'scope': _scope, 'token_type': "Bearer", 'expires': expiry}
 
+
+api.add_resource(CreateTokenAPI, '/movie_recommend/api/v1/create-token/', endpoint='create_token_settings')
 
 class RefreshTokenAPI(Resource):
     """
         Refresh Token API
     """
-    pass
 
+    def __init__(self):
+        self.regparse = reqparse.RequestParser()
+        self.regparse.add_argument('refresh_token', type=str, location='json')
+        super(CreateTokenAPI).__init__()
+
+    def post(self):
+        args = self.reqparse.parse_args()
+        refresh_token = RefreshToken.query.get(token=str(args['refresh_token']))
+        application = refresh_token.access_token.application.id
+        #application = Application.query.get(client_id=str(args['client_id']), client_secret=str(args['client_secret']))
+        token = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(30))
+        refresh_token = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(30))
+        user = User.query.get(username=args['username'])
+        expiry = None # time of expiration of the Token
+        _scope = "read write"
+        access_token = AccessToken(user, application, str(args['grant_type']), token, expiry, _scope)
+        db.session.add(access_token)
+        db.session.commit()
+        refresh_token_instance = RefreshToken(user, application, access_token, str(args['grant_type']), refresh_token, expiry, _scope)
+        db.session.add(refresh_token_instance)
+        db.session.commit()
+        return {'access_token': token, 'refresh_token': refresh_token, 'scope': _scope, 'token_type': "Bearer", 'expires': expiry}
+
+
+api.add_resource(RefreshTokenAPI, '/movie_recommend/api/v1/refresh-token/', endpoint='refresh_token_settings')
 
 
 
