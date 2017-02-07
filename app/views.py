@@ -1002,11 +1002,21 @@ class CreateTokenAPI(Resource):
 
     def __init__(self):
         self.regparse = reqparse.RequestParser()
-        self.regparse.add_argument('grant_type', type=str, location='json')
-        self.regparse.add_argument('username', type=str, location='json')
-        self.regparse.add_argument('password', type=str, location='json')
-        self.regparse.add_argument('client_id', type=str, location='json')
-        self.regparse.add_argument('client_secret', type=str, location='json')
+        self.regparse.add_argument('grant_type', type=str, required=True,
+                                   help='No name Provided',
+                                   location='json')
+        self.regparse.add_argument('username', type=str, required=True,
+                                   help='No name Provided',
+                                   location='json')
+        self.regparse.add_argument('password', type=str, required=True,
+                                   help='No name Provided',
+                                   location='json')
+        self.regparse.add_argument('client_id', type=str, required=True,
+                                   help='No name Provided',
+                                   location='json')
+        self.regparse.add_argument('client_secret', type=str, required=True,
+                                   help='No name Provided',
+                                   location='json')
         super(CreateTokenAPI).__init__()
 
     def post(self):
