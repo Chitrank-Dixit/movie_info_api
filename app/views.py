@@ -994,6 +994,7 @@ api.add_resource(ApplicationAPI, '/movie_recommend/api/v1/application/<int:id>/'
 
 # get the grant (code to make request from the other ends)
 
+
 class CreateTokenAPI(Resource):
     """
         Create the create token api
@@ -1035,7 +1036,7 @@ class RefreshTokenAPI(Resource):
     def __init__(self):
         self.regparse = reqparse.RequestParser()
         self.regparse.add_argument('refresh_token', type=str, location='json')
-        super(CreateTokenAPI).__init__()
+        super(RefreshTokenAPI).__init__()
 
     def post(self):
         args = self.reqparse.parse_args()

@@ -394,9 +394,8 @@ class AuthorizationGrantType(Enum):
 class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(40))
-    client_id = db.Column(db.String(40), primary_key=True)
-    client_secret = db.Column(db.String(128), unique=True, index=True,
-                              nullable=False)
+    client_id = db.Column(db.String(40), unique=True, nullable=True)
+    client_secret = db.Column(db.String(128), unique=True, nullable=True)
     client_type = db.Column(ChoiceType(ClientType, impl=db.Integer()))
     authorization_grant_type = db.Column(ChoiceType(AuthorizationGrantType, impl=db.Integer()))
 
@@ -407,6 +406,7 @@ class Application(db.Model):
 
 
     def __init__(self, name, client_id, client_secret, client_type, authorization_grant_type, user):
+        super(Application, self).__init__()
         self.name = name
         self.client_id = client_id
         self.client_secret = client_secret
@@ -421,7 +421,7 @@ class Application(db.Model):
 class NApplication(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(40))
-    client_id = db.Column(db.String(40), primary_key=True)
+    client_id = db.Column(db.String(40), unique=True, nullable=True)
     client_secret = db.Column(db.String(128), unique=True, index=True,
                               nullable=False)
     # client_type = db.Column(ChoiceType(ClientType, impl=db.Integer()))
@@ -542,6 +542,15 @@ class AccessToken(db.Model):
     token = db.Column(db.String(30), unique=True)
     expires = db.Column(db.DateTime)
     _scopes = db.Column(db.Text)
+    #user, application, str(args['grant_type']), token, expiry, _scope
+
+    def __init__(self, user, application, grant_type, token, expiry, _scopes):
+        self.user = user
+        self.application = application
+        self.grant_type = grant_type
+        self.token = token
+        self.expiry = expiry
+        self._scopes = _scopes
 
     def delete(self):
         db.session.delete(self)
