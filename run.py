@@ -2,8 +2,7 @@
 
 """Movie Recommender API"""
 
-from app import app, oauth
+from app import app
 
 if __name__ == '__main__':
     app.run(debug=True)
-    oauth.init_app(app)

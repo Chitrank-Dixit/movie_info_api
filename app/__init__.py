@@ -5,6 +5,7 @@
 """Movie Recommender API"""
 
 from flask import Flask, jsonify, abort, make_response
+from flask.ext.login import LoginManager
 from flask_script import Manager
 from flask.ext.restful import Api, Resource, reqparse, fields, marshal
 from flask.ext.httpauth import HTTPBasicAuth
@@ -15,6 +16,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_oauthlib.provider import OAuth2Provider
 from flask_migrate import Migrate, MigrateCommand
 from flask_oauth import OAuth
+
 # flask-jwt can also be used it is also straight forward and easy to use , just supply username and password
 # and ready to be used
 # https://pythonhosted.org/Flask-JWT/

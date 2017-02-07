@@ -6,12 +6,13 @@ from app import marshal
 from flask.json import jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from flask_restful import reqparse, Resource
-from app.decorators import authroize_token
+from app.decorators import authorize_token
 from .models import User, UserPreferences, FilmIndustry, Genre, Movie, TVSeries, Video , Award ,Actor, Application, \
     Grant, AccessToken, RefreshToken
 from .serializers import UserSchema , UserPreferencesSchema, GenreSchema, FilmIndustrySchema, MovieSchema, TVSeriesSchema,VideoSchema, AwardsSchema, ActorSchema, \
     ApplicationSchema, GrantSchema
 from werkzeug.security import gen_salt
+from flask_security import auth_token_required
 import datetime
 # # refer microblog app by miguelgrinberg to make models and views flask, just take care this
 # # time we are building the API server not just a basic site and take care to use only class based
@@ -837,7 +838,7 @@ api.add_resource(ActorsAPI, '/movie_recommend/api/v1/actors/<int:id>/', endpoint
 class GenreListCreateAPI(Resource):
     #decorators = [auth.login_required]
     #decorators=[oauth.require_oauth('email')]
-    decorators = [authroize_token]
+    method_decorators =  [authorize_token]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -852,7 +853,8 @@ class GenreListCreateAPI(Resource):
         result = genre_schema.dump(genres)
         return {"genre_list": result.data}
 
-    def post(self):
+    def post(self, *args, **kwargs):
+        # *args and **kwargs to fetch user object after successful authorization
         args = self.reqparse.parse_args()
         genre = Genre(str(args['name']))
         db.session.add(genre)
@@ -866,7 +868,7 @@ class GenreListCreateAPI(Resource):
 
 class GenreAPI(Resource):
     #decorators = [auth.login_required]
-    decorators=[oauth.require_oauth('email')]
+    decorators=[authorize_token]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()

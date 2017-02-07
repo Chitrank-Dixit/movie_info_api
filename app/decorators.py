@@ -6,16 +6,29 @@ import datetime
 from app import oauth, db
 from app.models import Grant, AccessToken
 from functools import wraps
+from flask import request, Response, jsonify, current_app
+import json
+from app.serializers import UserSchema
 
+# make another admin user authorization (check that with user role as admin)
 
-def authroize_token(function):
+def authorize_token(function):
     @wraps(function)
     def decorated_function(*args, **kwargs):
         # TODO: Check for correct token here
-        access_token = AccessToken.query.get()
+        bearer, token = request.environ['HTTP_AUTHORIZATION'].split()
+        access_token = AccessToken.query.filter_by(token=token).first()
         if access_token:
-            return function(True, *args, **kwargs)
-        return function(*args, **kwargs)
+            # user_schema = UserSchema()
+            # result = user_schema.dump(access_token.user)
+            # return jsonify({"user": result})
+            # content = json.dumps({"user": "sdf"})
+            # return current_app.response_class(content, mimetype="application/json")
+            kwargs['user'] = access_token.user
+            return function(*args, **kwargs)
+
+        js = json.dumps({"Unauthorized": "Invalid Token Provided"})
+        return Response(js, 401, mimetype="application/json")
     return decorated_function
 
 

@@ -1,9 +1,28 @@
-from . import db
+from . import db, app
 import re
 from hashlib import md5
 from enum import Enum
+from flask.ext.security import UserMixin, RoleMixin
 from sqlalchemy.orm import validates
 from sqlalchemy_utils.types.choice import ChoiceType
+from flask.ext.security import Security, SQLAlchemyUserDatastore
+
+
+################ Misc Time Stamp Mixin ###############
+
+class TimeStampMixin(db.Model):
+    __abstract__ = True
+    id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    modified_at = db.Column(db.DateTime, default=db.func.current_timestamp(),
+                            onupdate=db.func.current_timestamp())
+
+roles_users = db.Table('roles_users',
+                       db.Column('user_id', db.Integer(),
+                                 db.ForeignKey('user.id')),
+                       db.Column('role_id', db.Integer(),
+                                 db.ForeignKey('role.id')))
+
 
 ################ relationship table (many to many relationships) ###############
 
@@ -34,10 +53,13 @@ user_favourite_videos = db.Table('user_favourite_videos',
 
 ################ User and User Preference related data ############
 
+class Role(TimeStampMixin, RoleMixin):
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(80), unique=True)
+    description = db.Column(db.String(255))
 
 
-
-class User(db.Model):
+class User(TimeStampMixin, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
     first_name = db.Column(db.String(80))
@@ -45,6 +67,8 @@ class User(db.Model):
     password = db.Column(db.String(80))
     address = db.Column(db.String(80))
     email = db.Column(db.String(120), unique=True)
+    roles = db.relationship('Role', secondary=roles_users,
+                            backref=db.backref('users', lazy='dynamic'))
 
     def __init__(self, username,first_name, last_name, password, address, email):
         self.username = username
@@ -95,7 +119,7 @@ class User(db.Model):
         return '<User %r>' % self.username
 
 
-class UserPreferences(db.Model):
+class UserPreferences(TimeStampMixin):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship('User', backref='user_preferences')
@@ -139,6 +163,9 @@ class UserPreferences(db.Model):
     def __init__(self, user_id):
         self.user_id = user_id
 
+################ Security Settings #################
+user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+security = Security(app, user_datastore)
 
 
 
@@ -165,7 +192,7 @@ movie_actors = db.Table('movie_actors',
 
 ########################### Film Industry ,Tv Series, Movie ,Video , Genre related data ###############
 
-class FilmIndustry(db.Model):
+class FilmIndustry(TimeStampMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80))
     location = db.Column(db.String(80))
@@ -179,7 +206,7 @@ class FilmIndustry(db.Model):
 
 
 
-class TVSeries(db.Model):
+class TVSeries(TimeStampMixin):
     id = db.Column(db.Integer, primary_key=True)
     film_industry_id = db.Column(db.Integer, db.ForeignKey('film_industry.id'))
     film_industry = db.relationship('FilmIndustry', backref='tv_series')
@@ -202,7 +229,7 @@ class TVSeries(db.Model):
     def __str__(self):
         pass
 
-class Video(db.Model):
+class Video(TimeStampMixin):
     id = db.Column(db.Integer, primary_key=True)
     film_industry_id = db.Column(db.Integer, db.ForeignKey('film_industry.id'))
     film_industry = db.relationship('FilmIndustry', backref='videos')
@@ -226,7 +253,7 @@ class Video(db.Model):
         pass
 
 
-class Movie(db.Model):
+class Movie(TimeStampMixin):
     id = db.Column(db.Integer, primary_key=True)
     film_industry_id = db.Column(db.Integer, db.ForeignKey('film_industry.id'))
     film_industry = db.relationship('FilmIndustry', backref='movies')
@@ -250,7 +277,7 @@ class Movie(db.Model):
         pass
 
 
-class Genre(db.Model):
+class Genre(TimeStampMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True)
 
@@ -273,7 +300,7 @@ awarded_actors = db.Table('awarded_actors',
 ###################### Awards , Awardsname related data ###################
 
 
-class Award(db.Model):
+class Award(TimeStampMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True)
     awarded_to = db.relationship('Actor',
@@ -325,7 +352,7 @@ actor_relationship = db.Table('actor_relationship',
 
 ##################### Actor related data ##################
 
-class Actor(db.Model):
+class Actor(TimeStampMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80))
     gender = db.Column(db.String(80))
@@ -391,7 +418,7 @@ class AuthorizationGrantType(Enum):
     ClientCredentials = 4
 
 
-class Application(db.Model):
+class Application(TimeStampMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(40))
     client_id = db.Column(db.String(40), unique=True, nullable=True)
@@ -418,7 +445,7 @@ class Application(db.Model):
         pass
 
 
-class NApplication(db.Model):
+class NApplication(TimeStampMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(40))
     client_id = db.Column(db.String(40), unique=True, nullable=True)
@@ -446,7 +473,7 @@ class NApplication(db.Model):
 
 
 
-class Grant(db.Model):
+class Grant(TimeStampMixin):
     id = db.Column(db.Integer, primary_key=True)
 
     user_id = db.Column(
@@ -523,7 +550,7 @@ class Grant(db.Model):
 #         return []
 
 
-class AccessToken(db.Model):
+class AccessToken(TimeStampMixin):
     id = db.Column(db.Integer, primary_key=True)
 
     user_id = db.Column(
@@ -564,7 +591,7 @@ class AccessToken(db.Model):
         return []
 
 
-class RefreshToken(db.Model):
+class RefreshToken(TimeStampMixin):
     id = db.Column(db.Integer, primary_key=True)
 
 
