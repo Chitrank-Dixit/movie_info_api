@@ -1038,6 +1038,7 @@ class CreateTokenAPI(Resource):
 
 api.add_resource(CreateTokenAPI, '/movie_recommend/api/v1/create-token/', endpoint='create_token_settings')
 
+
 class RefreshTokenAPI(Resource):
     """
         Refresh Token API
@@ -1045,17 +1046,23 @@ class RefreshTokenAPI(Resource):
 
     def __init__(self):
         self.regparse = reqparse.RequestParser()
-        self.regparse.add_argument('refresh_token', type=str, location='json')
+        self.regparse.add_argument('refresh_token', type=str, required=True,
+                                   help='No name Provided',
+                                   location='json')
+        self.regparse.add_argument('grant_type', type=str, required=True,
+                                   help='No name Provided',
+                                   location='json')
         super(RefreshTokenAPI, self).__init__()
 
     def post(self):
         args = self.regparse.parse_args()
-        refresh_token = RefreshToken.query.get(token=str(args['refresh_token']))
-        application = refresh_token.access_token.application.id
+        refresh_token = RefreshToken.query.filter_by(token=str(args['refresh_token'])).first()
+        application = refresh_token.application
+        user = refresh_token.user
         #application = Application.query.get(client_id=str(args['client_id']), client_secret=str(args['client_secret']))
         token = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(30))
         refresh_token = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(30))
-        user = User.query.get(username=args['username'])
+        #user = User.query.filter_by(username=args['username']).first()
         expiry = None # time of expiration of the Token
         _scope = "read write"
         access_token = AccessToken(user, application, str(args['grant_type']), token, expiry, _scope)
