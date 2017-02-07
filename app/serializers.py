@@ -88,6 +88,8 @@ class ApplicationSchema(ma.Schema):
     user = ma.Nested(UserSchema)
 
 
+
+
 class GrantSchema(ma.Schema):
     class Meta:
         model = Grant

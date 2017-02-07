@@ -907,12 +907,12 @@ class ApplicationListCreateAPI(Resource):
                                    help='No name Provided',
                                    location='json')
 
-        self.reqparse.add_argument('client_type', type=str, required=True,
+        self.reqparse.add_argument('client_type', type=int, required=True,
                                    help='No name Provided',
                                    location='json')
 
 
-        self.reqparse.add_argument('authorization_grant_type', type=str, required=True,
+        self.reqparse.add_argument('authorization_grant_type', type=int, required=True,
                                        help='No name Provided',
                                        location='json')
 
@@ -925,7 +925,7 @@ class ApplicationListCreateAPI(Resource):
         #                            help='No client_secret Provided',
         #                            location='json')
 
-        self.reqparse.add_argument('user_id', type=str, required=True,
+        self.reqparse.add_argument('user_id', type=int, required=True,
                                    help='No user_id Provided',
                                    location='json')
 
@@ -942,7 +942,7 @@ class ApplicationListCreateAPI(Resource):
         client_id = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(40))
         client_secret = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(128))
         user = User.query.get(args['user_id'])
-        application = Application(str(args['name']), str(args['client_type']), str(['authorization_grant_type']), client_id, client_secret, user)
+        application = Application(str(args['name']), client_id, client_secret, args['client_type'], args['authorization_grant_type'], user)
         db.session.add(application)
         db.session.commit()
         application_schema = ApplicationSchema()
@@ -957,7 +957,7 @@ class ApplicationAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('name', type=str, location='json')
-        self.reqparse.add_argument('client_type', type=str, location='json')
+        self.reqparse.add_argument('client_type', type=int, location='json')
         self.reqparse.add_argument('authorization_grant_type', type=int, location='json')
         # self.reqparse.add_argument('client_id', type=str, location='json')
         # self.reqparse.add_argument('client_secret', type=str, location='json')
@@ -990,7 +990,7 @@ class ApplicationAPI(Resource):
         return {'message': 'data deleted'}
 
 api.add_resource(ApplicationListCreateAPI, '/movie_recommend/api/v1/applications/', endpoint='applications')
-api.add_resource(ApplicationAPI, '/movie_recommend/api/v1/application/<int:id/', endpoint='application_settings')
+api.add_resource(ApplicationAPI, '/movie_recommend/api/v1/application/<int:id>/', endpoint='application_settings')
 
 # get the grant (code to make request from the other ends)
 

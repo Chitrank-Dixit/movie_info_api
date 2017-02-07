@@ -3,7 +3,7 @@
 # https://andrefsp.wordpress.com/2012/08/23/writing-a-class-decorator-in-python/
 
 import datetime
-from app import User, oauth, db
+from app import oauth, db
 from app.models import Grant, AccessToken
 from functools import wraps
 
