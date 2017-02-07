@@ -590,6 +590,15 @@ class RefreshToken(db.Model):
     expires = db.Column(db.DateTime)
     _scopes = db.Column(db.Text)
 
+    def __init__(self, user, application, access_token, grant_type, token, expiry, _scopes):
+        self.user = user
+        self.application = application
+        self.access_token = access_token
+        self.grant_type = grant_type
+        self.token = token
+        self.expiry = expiry
+        self._scopes = _scopes
+
     def delete(self):
         db.session.delete(self)
         db.session.commit()

@@ -1017,14 +1017,14 @@ class CreateTokenAPI(Resource):
         self.regparse.add_argument('client_secret', type=str, required=True,
                                    help='No name Provided',
                                    location='json')
-        super(CreateTokenAPI).__init__()
+        super(CreateTokenAPI, self).__init__()
 
     def post(self):
-        args = self.reqparse.parse_args()
-        application = Application.query.get(client_id=str(args['client_id']), client_secret=str(args['client_secret']))
+        args = self.regparse.parse_args()
+        application = Application.query.filter_by(client_id=str(args['client_id']), client_secret=str(args['client_secret'])).first()
         token = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(30))
         refresh_token = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for n in xrange(30))
-        user = User.query.get(username=args['username'])
+        user = User.query.filter_by(username=args['username']).first()
         expiry = None # time of expiration of the Token
         _scope = "read write"
         access_token = AccessToken(user, application, str(args['grant_type']), token, expiry, _scope)
@@ -1046,10 +1046,10 @@ class RefreshTokenAPI(Resource):
     def __init__(self):
         self.regparse = reqparse.RequestParser()
         self.regparse.add_argument('refresh_token', type=str, location='json')
-        super(RefreshTokenAPI).__init__()
+        super(RefreshTokenAPI, self).__init__()
 
     def post(self):
-        args = self.reqparse.parse_args()
+        args = self.regparse.parse_args()
         refresh_token = RefreshToken.query.get(token=str(args['refresh_token']))
         application = refresh_token.access_token.application.id
         #application = Application.query.get(client_id=str(args['client_id']), client_secret=str(args['client_secret']))
